@@ -1,0 +1,14 @@
+SU
+Andor
+Scan Type: One Motor From File
+C:\Beamline Controls\BCS Setup Data\ScanFiles\Zakaria Long Pickle RIXS\Fe L3 XES.txt
+X Motor: BL 8 Energy
+Delay After Move (s): 0.10000000
+Stay at End: 0
+Curvature: 0.0
+Clip to ROI: No
+ROI: 1309 526 2539 1627
+Background ROI: None
+Data File Path: C:\Beamline Controls\BCS Setup Data\240329\CCD Scan 16500
+Time	Frame #	BL 8 Energy	Izero	Izero 2	TFY	TEY	Sample Current	Beam Current	Total Flux	Counts	Background	Filename
+07:29:44	1.00000000	740.00117242	40690648.00000000	1759819.00000000	19020777.00000000	417264.00000000	0.00000000	0.00000000	0.00000000	1068761.00000000	343.00000000	CoL3_16500-00001
