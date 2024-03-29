@@ -30,13 +30,28 @@ class Rixs:
         self,
         show=False,
         savefig=None,
+        plot_pfy=True,
+        pfy_color='gray',
+        plot_tfy=True,
+        tfy_color='black',
+        plot_tey=True,
+        tey_color='blue'
     ):
         fontsize=12
-        self.fig, self.axs = plt.subplots(1, 2, layout='constrained')
+        self.fig, self.axs = plt.subplots(1, 2, layout='constrained', gridspec_kw={'width_ratios': [1, 0.25]})
+        
+        I0 = self.info_df['Izero']
         
         x = self.df['X']
         y = self.info_df['BL 8 Energy']
         Z = np.array(self.df.iloc[:, 1:]).transpose()
+        
+        for i in range(len(I0)):
+            Z[:,i] = Z[:,i]/I0[i]
+            
+        # print(Z.argmax())
+        Z = (Z-Z.min())/(Z.max()-Z.min())
+        # print(Z.max(keepdims=True))
         
         pc = self.axs[0].pcolormesh(x, y, Z, linewidth=0, antialiased=True, alpha=1, edgecolor='face', rasterized=True)
 
@@ -44,16 +59,17 @@ class Rixs:
 
         temp_df = self.df.drop(labels='X', axis=1)
 
-        I = temp_df.sum(axis=0)
-        print(I)
-        # print(self.df.sum(axis=1))
+        I = Z.sum(axis=1)
 
         tfy = self.info_df['TFY']
         tey = self.info_df['TEY']
 
-        self.axs[1].plot((I-min(I))/(max(I)-min(I)), y)
-        self.axs[1].plot((tfy-min(tfy))/(max(tfy)-min(tfy)), y)
-        self.axs[1].plot((tey-min(tey))/(max(tey)-min(tey)), y)
+        if plot_pfy:
+            self.axs[1].plot((I-min(I))/(max(I)-min(I)), y, color=pfy_color)
+        if plot_tfy:
+            self.axs[1].plot((tfy-min(tfy))/(max(tfy)-min(tfy)), y, color=tfy_color)
+        if plot_tey:
+            self.axs[1].plot((tey-min(tey))/(max(tey)-min(tey)), y, color=tey_color)
 
         self.axs[0].set_xlim([0,2047])
         self.axs[1].set_xlim([-0.1,1.1])
@@ -74,7 +90,6 @@ class Rixs:
         self.axs[1].set_xlabel('Norm. Intensity', fontsize=fontsize)
 
         self.axs[0].set_ylabel('Excitation Energy (eV)', fontsize=fontsize)
-        # self.axs[1].ylabel('Norm. Intensity')
         if show:
             plt.show()
         if savefig:
