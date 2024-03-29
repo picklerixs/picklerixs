@@ -34,14 +34,19 @@ class Rixs:
         self,
         show=False,
         savefig=None,
-        plot_pfy=True,
+        plot_pfy=False,
         pfy_color='gray',
         plot_tfy=True,
         tfy_color='black',
-        plot_tey=True,
+        plot_tey=False,
         tey_color='blue',
         izero='Izero',
-        drop=None
+        drop=None,
+        ipfy_lim=None,
+        plot_ipfy=False,
+        ipfy_color='Blue',
+        ipfy_box=False,
+        dim=[3.25,3.25]
     ):
         fontsize=12
         self.fig, self.axs = plt.subplots(1, 2, layout='constrained', gridspec_kw={'width_ratios': [1, 0.25]})
@@ -84,6 +89,7 @@ class Rixs:
         # temp_df = self.df.drop(labels='X', axis=1)
 
         I = Z.sum(axis=1)
+        ipfy = np.divide(1, Z[:,min(ipfy_lim):max(ipfy_lim)].sum(axis=1))
 
         tfy = np.array(self.info_df['TFY'])
         tey = np.array(self.info_df['TEY'])
@@ -94,6 +100,8 @@ class Rixs:
             self.axs[1].plot((tfy-min(tfy))/(max(tfy)-min(tfy)), y, color=tfy_color)
         if plot_tey:
             self.axs[1].plot((tey-min(tey))/(max(tey)-min(tey)), y, color=tey_color)
+        if plot_ipfy:
+            self.axs[1].plot((ipfy-min(ipfy))/(max(ipfy)-min(ipfy)), y, color=ipfy_color)
 
         self.axs[0].set_xlim([0,2047])
         self.axs[1].set_xlim([-0.1,1.1])
@@ -111,9 +119,14 @@ class Rixs:
             # self.axs.yaxis.set_tick_params(width=tick_linewidth, length=tick_length*0.5, which='minor')
             a.yaxis.set_minor_locator(MultipleLocator(1))
         self.axs[0].set_xlabel('Emission Energy (a.u.)', fontsize=fontsize)
-        self.axs[1].set_xlabel('Norm. Intensity', fontsize=fontsize)
+        self.axs[1].set_xlabel('Norm.\n Intensity', fontsize=fontsize)
 
         self.axs[0].set_ylabel('Excitation Energy (eV)', fontsize=fontsize)
+        
+        self.axs[1].set_xticks([])
+        self.axs[1].set_yticks([])
+        
+        self.fig.set_size_inches(*dim)
         if show:
             plt.show()
         if savefig:
@@ -126,6 +139,6 @@ class Rixs:
         fig=None,
         ax=None
     ):
-        if fig is None and (ax is None):
+        if fig is None or (ax is None):
             fig, ax = plt.subplots()
         ax.plot(self.df.iloc[:,0], self.df.iloc[:,idx])

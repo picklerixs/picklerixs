@@ -24,7 +24,7 @@ dir_list = [r"../data/irixs/2024-3-28/CCD Scan 16491/Andor",
             r"../data/irixs/2024-3-28/CCD Scan 16497/Andor",
             r"../data/irixs/2024-3-28/CCD Scan 16498/Andor",
             r"../data/irixs/2024-3-28/CCD Scan 16499/Andor",
-            r"../data/irixs/2024-3-28/CCD Scan 166500/Andor"]
+            r"../data/irixs/2024-3-28/CCD Scan 16500/Andor"]
 info_file_list = [r"../data/irixs/2024-3-28/CCD Scan 16491/CoL3_16491-AI.txt",
              r"../data/irixs/2024-3-28/CCD Scan 16492/CoL3_16492-AI.txt",
              r"../data/irixs/2024-3-28/CCD Scan 16493/CoL3_16493-AI.txt",
@@ -33,6 +33,8 @@ info_file_list = [r"../data/irixs/2024-3-28/CCD Scan 16491/CoL3_16491-AI.txt",
              r"../data/irixs/2024-3-28/CCD Scan 16498/CoL3_16498-AI.txt",
              r"../data/irixs/2024-3-28/CCD Scan 16499/CoL3_16499-AI.txt",
              r"../data/irixs/2024-3-28/CCD Scan 16500/CoL3_16500-AI.txt"]
+
+ipfy_lim = [395,800]
 
 # for i in range(len(dir_list)):
 for i in [0,1,2,3]:
@@ -51,13 +53,13 @@ for i in [0,1,2,3]:
         drop = []
     else:
         drop = []
-    rixs.plot_mrixs(show=False, plot_tey=False, izero=izero, drop=drop)
+    rixs.plot_mrixs(show=False, plot_ipfy=True, ipfy_lim=ipfy_lim, izero=izero, drop=drop,dim=[4,2])
 
 # fig, ax = plt.subplots()
-# for i in [-2,-1]:
+# for i in [0]:
 #     dir = dir_list[i]
 #     info_file = info_file_list[i]
-#     rixs = pyrixs.Rixs(dir, info_file, fig=fig, ax=ax)
-#     rixs.plot_xes()
+#     rixs = pyrixs.Rixs(dir, info_file)
+#     rixs.plot_xes(fig=fig, ax=ax, idx=1)
     
 plt.show()
