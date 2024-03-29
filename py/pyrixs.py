@@ -7,6 +7,7 @@ import pathlib
 import warnings
 
 from functools import reduce
+from matplotlib.ticker import MultipleLocator
 
 class Rixs:
     def __init__(
@@ -20,11 +21,13 @@ class Rixs:
         self.child_list = self.spec_dir.glob('*-1D.txt')
         self.child_list = sorted(self.child_list)
         for c in self.child_list:
-                data_list.append(pd.read_csv(c, skiprows=9, sep=r'\t', engine='python'))
+            data_list.append(pd.read_csv(c, skiprows=9, sep=r'\t', engine='python'))
             
         self.data_list = data_list
-        self.df = pd.concat([d.set_index('X') for d in self.data_list], axis=1, join='inner').reset_index()
-        
+        if len(self.data_list) > 1:
+            self.df = pd.concat([d.set_index('X') for d in self.data_list], axis=1, join='inner').reset_index()
+        else:
+            self.df = self.data_list[0]
         self.info_df = pd.read_csv(pathlib.Path(info_file, **kwargs), skiprows=12, sep=r'\t', engine='python')
         
     def plot_mrixs(
@@ -106,7 +109,7 @@ class Rixs:
             # self.axs.xaxis.set_tick_params(width=tick_linewidth, length=tick_length*0.5, which='minor')
             # self.axs.yaxis.set_tick_params(width=tick_linewidth, length=tick_length, which='major')
             # self.axs.yaxis.set_tick_params(width=tick_linewidth, length=tick_length*0.5, which='minor')
-            
+            a.yaxis.set_minor_locator(MultipleLocator(1))
         self.axs[0].set_xlabel('Emission Energy (a.u.)', fontsize=fontsize)
         self.axs[1].set_xlabel('Norm. Intensity', fontsize=fontsize)
 
@@ -115,3 +118,14 @@ class Rixs:
             plt.show()
         if savefig:
             plt.savefig(savefig)
+            
+            
+    def plot_xes(
+        self,
+        idx=1,
+        fig=None,
+        ax=None
+    ):
+        if fig is None and (ax is None):
+            fig, ax = plt.subplots()
+        ax.plot(self.df.iloc[:,0], self.df.iloc[:,idx])
