@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import xarray as xr
 import pathlib
+import warnings
 
 from functools import reduce
 
@@ -35,16 +36,36 @@ class Rixs:
         plot_tfy=True,
         tfy_color='black',
         plot_tey=True,
-        tey_color='blue'
+        tey_color='blue',
+        izero='Izero',
+        drop=None
     ):
         fontsize=12
         self.fig, self.axs = plt.subplots(1, 2, layout='constrained', gridspec_kw={'width_ratios': [1, 0.25]})
-        
-        I0 = self.info_df['Izero']
-        
-        x = self.df['X']
-        y = self.info_df['BL 8 Energy']
+
+        if drop is None:
+            drop = []
+
+        if self.info_df[izero].min() == 0:
+            idx = self.info_df[izero].argmin()
+            if idx not in drop:
+                drop.append(idx)
+            warnings.warn('I0 = 0 detected at row {}'.format(idx))
+            
+        if len(drop) > 0:
+            column_numbers = [x for x in range(self.df.shape[1])]  # list of columns' integer indices
+            for i in drop:
+                column_numbers.remove(i) #removing column integer index idx
+            self.df = self.df.iloc[:, column_numbers] #return all columns except the idx-th column
+            self.info_df.drop(drop, inplace=True, axis=0)
+            warnings.warn('Deleted row(s) {}.'.format(drop))
+            
+        I0 = np.array(self.info_df[izero])
+        x = np.array(self.df['X'])
+        y = np.array(self.info_df['BL 8 Energy'])
         Z = np.array(self.df.iloc[:, 1:]).transpose()
+        
+        # print(I0)
         
         for i in range(len(I0)):
             Z[:,i] = Z[:,i]/I0[i]
@@ -57,12 +78,12 @@ class Rixs:
 
         # print(self.df.columns)
 
-        temp_df = self.df.drop(labels='X', axis=1)
+        # temp_df = self.df.drop(labels='X', axis=1)
 
         I = Z.sum(axis=1)
 
-        tfy = self.info_df['TFY']
-        tey = self.info_df['TEY']
+        tfy = np.array(self.info_df['TFY'])
+        tey = np.array(self.info_df['TEY'])
 
         if plot_pfy:
             self.axs[1].plot((I-min(I))/(max(I)-min(I)), y, color=pfy_color)
