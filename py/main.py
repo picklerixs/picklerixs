@@ -2,6 +2,7 @@ import pyrixs
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import pathlib
 
 
 major_tick_multiple = 5
@@ -17,30 +18,47 @@ tick_linewidth=axes_linewidth*.9
 tick_length=tick_linewidth*5
 
 
-dir_list = [r"../data/irixs/2024-3-28/CCD Scan 16491/Andor",
-            r"../data/irixs/2024-3-28/CCD Scan 16492/Andor",
-            r"../data/irixs/2024-3-28/CCD Scan 16493/Andor",
-            r"../data/irixs/2024-3-28/CCD Scan 16494/Andor",
-            r"../data/irixs/2024-3-28/CCD Scan 16497/Andor",
-            r"../data/irixs/2024-3-28/CCD Scan 16498/Andor",
-            r"../data/irixs/2024-3-28/CCD Scan 16499/Andor",
-            r"../data/irixs/2024-3-28/CCD Scan 16500/Andor"]
-info_file_list = [r"../data/irixs/2024-3-28/CCD Scan 16491/CoL3_16491-AI.txt",
-             r"../data/irixs/2024-3-28/CCD Scan 16492/CoL3_16492-AI.txt",
-             r"../data/irixs/2024-3-28/CCD Scan 16493/CoL3_16493-AI.txt",
-             r"../data/irixs/2024-3-28/CCD Scan 16494/CoL3_16494-AI.txt",
-             r"../data/irixs/2024-3-28/CCD Scan 16497/CoL3_16497-AI.txt",
-             r"../data/irixs/2024-3-28/CCD Scan 16498/CoL3_16498-AI.txt",
-             r"../data/irixs/2024-3-28/CCD Scan 16499/CoL3_16499-AI.txt",
-             r"../data/irixs/2024-3-28/CCD Scan 16500/CoL3_16500-AI.txt"]
+# dir_list = [r"../data/irixs/2024-3-28/CCD Scan 16491/Andor",
+#             r"../data/irixs/2024-3-28/CCD Scan 16492/Andor",
+#             r"../data/irixs/2024-3-28/CCD Scan 16493/Andor",
+#             r"../data/irixs/2024-3-28/CCD Scan 16494/Andor",
+#             r"../data/irixs/2024-3-28/CCD Scan 16497/Andor",
+#             r"../data/irixs/2024-3-28/CCD Scan 16498/Andor",
+#             r"../data/irixs/2024-3-28/CCD Scan 16499/Andor",
+#             r"../data/irixs/2024-3-28/CCD Scan 16500/Andor"]
+# info_file_list = [r"../data/irixs/2024-3-28/CCD Scan 16491/CoL3_16491-AI.txt",
+#              r"../data/irixs/2024-3-28/CCD Scan 16492/CoL3_16492-AI.txt",
+#              r"../data/irixs/2024-3-28/CCD Scan 16493/CoL3_16493-AI.txt",
+#              r"../data/irixs/2024-3-28/CCD Scan 16494/CoL3_16494-AI.txt",
+#              r"../data/irixs/2024-3-28/CCD Scan 16497/CoL3_16497-AI.txt",
+#              r"../data/irixs/2024-3-28/CCD Scan 16498/CoL3_16498-AI.txt",
+#              r"../data/irixs/2024-3-28/CCD Scan 16499/CoL3_16499-AI.txt",
+#              r"../data/irixs/2024-3-28/CCD Scan 16500/CoL3_16500-AI.txt"]
 
 ipfy_lim = [395,800]
-xlim = [1450,1750]
+xlim = [1525,1675]
 
 header_list = ['CoCl','CoN$_{3}$','CoN','Co(CO)N']
 
+dir = '../data/irixs/2024-3-28'
+dir_list, info_file_list = pyrixs.Util.bulk_data_read(dir)
+
+rixs_list = [pyrixs.Rixs(dir_list[i], info_file_list[i]) for i in [2,4,3,5]]
+
+# rixs0 = pyrixs.Rixs(dir_list[2], info_file_list[2])
+# rixs1 = pyrixs.Rixs(dir_list[4], info_file_list[4])
+
+pyrixs.Util.replace_entries(rixs_list[0], rixs_list[1])
+# pyrixs.Util.replace_entries(rixs_list[2], rixs_list[3])
+
+rixs_list[0].plot_mrixs(show=False, plot_ipfy=True, plot_tfy=False, plot_tfy_masked=True, ipfy_lim=ipfy_lim, dim=[4.5,2.5], xlim=xlim, header='CoN')
+# rixs_list[2].plot_mrixs(show=False, plot_ipfy=True, plot_tfy=False, plot_tfy_masked=True, ipfy_lim=ipfy_lim, dim=[4.5,2.5], xlim=xlim, header='Co(CO)N')
+
+
+# print(rixs0.df)
+
 # for i in range(len(dir_list)):
-for i in [0,1,2,3]:
+for i in [0,1,3]:
     dir = dir_list[i]
     info_file = info_file_list[i]
     rixs = pyrixs.Rixs(dir, info_file)

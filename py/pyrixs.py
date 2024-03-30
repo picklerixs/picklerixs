@@ -9,13 +9,23 @@ import warnings
 from functools import reduce
 from matplotlib.ticker import MultipleLocator
 
-class Rixs:
+class Rixs:        
     def __init__(
         self,
         spec_dir,
         info_file,
         **kwargs
     ):
+        '''
+        Methods for processing data from iRIXS.
+        Generates a dataframe containing detector information (info_df) and a dataframe containing 1D spectral data (df).
+        
+        ARGS:
+            spec_dir (str or pathlib.Path()): Directory containing 1D spectral data in .txt format.
+            info_file (str or pathlib.Path()): Andor detector information file. 
+            
+        kwargs are passed to pd.read_csv() when attempting to open info_file.
+        '''
         self.spec_dir = pathlib.Path(spec_dir, **kwargs)
         data_list = []
         self.child_list = self.spec_dir.glob('*-1D.txt')
@@ -37,6 +47,7 @@ class Rixs:
         plot_pfy=False,
         pfy_color='gray',
         plot_tfy=True,
+        plot_tfy_masked=False,
         tfy_color='black',
         plot_tey=False,
         tey_color='blue',
@@ -48,7 +59,8 @@ class Rixs:
         ipfy_box=False,
         dim=[3.25,3.25],
         xlim=[0,2047],
-        header=None
+        header=None,
+        tfy_skip=None
     ):
         fontsize=12
         self.fig, self.axs = plt.subplots(1, 2, layout='constrained', gridspec_kw={'width_ratios': [1, 0.25]})
@@ -96,11 +108,23 @@ class Rixs:
 
         tfy = np.array(self.info_df['TFY'])
         tey = np.array(self.info_df['TEY'])
+        
+        y_masked = []
+        tfy_masked = []
+        
+        for i in range(len(tfy)):
+            if tfy[i] != 8413656:
+                y_masked.append(y[i])
+                tfy_masked.append(tfy[i])
+        
+        print(tfy*(tfy != 8413656))
 
         if plot_pfy:
             self.axs[1].plot((I-min(I))/(max(I)-min(I)), y, color=pfy_color)
         if plot_tfy:
             self.axs[1].plot((tfy-min(tfy))/(max(tfy)-min(tfy)), y, color=tfy_color)
+        if plot_tfy_masked:
+            self.axs[1].plot((tfy_masked-min(tfy_masked))/(max(tfy_masked)-min(tfy_masked)), y_masked, color=tfy_color)
         if plot_tey:
             self.axs[1].plot((tey-min(tey))/(max(tey)-min(tey)), y, color=tey_color)
         if plot_ipfy:
@@ -152,3 +176,59 @@ class Rixs:
         if fig is None or (ax is None):
             fig, ax = plt.subplots()
         ax.plot(self.df.iloc[:,0], self.df.iloc[:,idx])
+        
+class Util:
+    @staticmethod
+    def bulk_data_read(
+        dir
+    ):
+        if isinstance(dir, str):
+            dir = pathlib.Path(dir)
+        
+        dir_list = []
+        info_file_list = []
+        
+        for c in sorted(dir.glob('*')):
+            dir_list.append(c/'Andor')
+            
+        for c in sorted(dir.glob('*/*AI.txt')):
+            info_file_list.append(c)
+            
+        return dir_list, info_file_list
+    
+    @staticmethod
+    def replace_entries(
+        rixs0,
+        rixs1,
+        energy_tol = 0.015,
+        energy_col = 'BL 8 Energy'
+    ):
+        '''
+        Replaces data points in Rixs() object rixs0 with corresponding points from rixs1 based on excitation energy.
+        
+        ARGS:
+            rixs0 (pyrixs.Rixs())
+            rixs1 (pyrixs.Rixs())
+            
+        KWARGS:
+            energy_tol: Tolerance for matching excitation energies.
+        '''
+        target_energies = rixs1.info_df[energy_col]
+        target_indices = []
+        for e in target_energies:
+            target_indices.append(Util.find_closest_indices(rixs0.info_df[energy_col], e, energy_tol))
+
+        for i in range(len(target_indices)):
+            idx = target_indices[i]
+            rixs0.info_df.iloc[idx,:] = rixs1.info_df.iloc[i,:]
+            rixs0.info_df["Frame #"].iloc[idx] = float(idx+1)
+            rixs0.df.iloc[:,idx+1] = rixs1.df.iloc[:,i+1]
+        
+    @staticmethod
+    def find_closest_indices(
+        arr,
+        val,
+        tol
+    ):
+        idxs = [ idx for idx,el in enumerate(arr) if (np.abs(el - val) < tol)]
+        return idxs[0] if len(idxs) != 0 else np.nan
