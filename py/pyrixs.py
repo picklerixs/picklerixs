@@ -46,7 +46,9 @@ class Rixs:
         plot_ipfy=False,
         ipfy_color='Blue',
         ipfy_box=False,
-        dim=[3.25,3.25]
+        dim=[3.25,3.25],
+        xlim=[0,2047],
+        header=None
     ):
         fontsize=12
         self.fig, self.axs = plt.subplots(1, 2, layout='constrained', gridspec_kw={'width_ratios': [1, 0.25]})
@@ -79,10 +81,11 @@ class Rixs:
             Z[:,i] = Z[:,i]/I0[i]
             
         # print(Z.argmax())
-        Z = (Z-Z.min())/(Z.max()-Z.min())
+        Z = (Z-Z.min())/(Z[:,min(xlim):max(xlim)].max()-Z.min())
         # print(Z.max(keepdims=True))
         
-        pc = self.axs[0].pcolormesh(x, y, Z, linewidth=0, antialiased=True, alpha=1, edgecolor='face', rasterized=True)
+        pc = self.axs[0].pcolormesh(x, y, Z, linewidth=0, antialiased=True, alpha=1, edgecolor='face', rasterized=True, vmin=0, vmax=1)
+        cbar = self.fig.colorbar(pc)
 
         # print(self.df.columns)
 
@@ -103,7 +106,7 @@ class Rixs:
         if plot_ipfy:
             self.axs[1].plot((ipfy-min(ipfy))/(max(ipfy)-min(ipfy)), y, color=ipfy_color)
 
-        self.axs[0].set_xlim([0,2047])
+        self.axs[0].set_xlim(xlim)
         self.axs[1].set_xlim([-0.1,1.1])
         self.axs[0].set_ylim([775,788])
         self.axs[1].set_ylim([775,788])
@@ -131,7 +134,14 @@ class Rixs:
             plt.show()
         if savefig:
             plt.savefig(savefig)
-            
+        
+        if isinstance(header, str):
+            self.axs[0].text(0.025, 0.95, header,
+                        verticalalignment='top',
+                        horizontalalignment='left',
+                        transform=self.axs[0].transAxes,
+                        fontsize=fontsize,
+                        color='white')
             
     def plot_xes(
         self,

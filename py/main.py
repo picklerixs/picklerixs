@@ -35,6 +35,9 @@ info_file_list = [r"../data/irixs/2024-3-28/CCD Scan 16491/CoL3_16491-AI.txt",
              r"../data/irixs/2024-3-28/CCD Scan 16500/CoL3_16500-AI.txt"]
 
 ipfy_lim = [395,800]
+xlim = [1450,1750]
+
+header_list = ['CoCl','CoN$_{3}$','CoN','Co(CO)N']
 
 # for i in range(len(dir_list)):
 for i in [0,1,2,3]:
@@ -49,14 +52,17 @@ for i in [0,1,2,3]:
     #     drop = [17,19,20]
     izero = 'Izero'
     if i == 2:
-        # drop = [17,19]
-        drop = []
+        drop = [17,19]
     else:
         drop = []
-    rixs.plot_mrixs(show=False, plot_ipfy=True, ipfy_lim=ipfy_lim, izero=izero, drop=drop,dim=[4,2])
+    if i not in [0,1,2,3]:
+        header = None
+    else:
+        header = header_list[i]
+    rixs.plot_mrixs(show=False, plot_ipfy=True, ipfy_lim=ipfy_lim, izero=izero, drop=drop, dim=[4.5,2.5], xlim=xlim, header=header)
 
 # fig, ax = plt.subplots()
-# for i in [0]:
+# for i in [-2,-1]:
 #     dir = dir_list[i]
 #     info_file = info_file_list[i]
 #     rixs = pyrixs.Rixs(dir, info_file)
