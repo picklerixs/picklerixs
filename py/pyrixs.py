@@ -9,6 +9,9 @@ import warnings
 from functools import reduce
 from matplotlib.ticker import MultipleLocator
 
+# TODO implement interactive mRIXS plots
+# TODO make masking of XAS data user-specifiable and not jank
+# TODO clean up plot styling options
 class Rixs:        
     def __init__(
         self,
@@ -117,7 +120,7 @@ class Rixs:
                 y_masked.append(y[i])
                 tfy_masked.append(tfy[i])
         
-        print(tfy*(tfy != 8413656))
+        # print(tfy*(tfy != 8413656))
 
         if plot_pfy:
             self.axs[1].plot((I-min(I))/(max(I)-min(I)), y, color=pfy_color)
