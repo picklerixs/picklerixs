@@ -183,7 +183,9 @@ class Rixs:
 class Util:
     @staticmethod
     def bulk_data_read(
-        dir
+        dir,
+        data_dir="Andor",
+        info_file_suffix="AI.txt"
     ):
         if isinstance(dir, str):
             dir = pathlib.Path(dir)
@@ -191,10 +193,10 @@ class Util:
         dir_list = []
         info_file_list = []
         
-        for c in sorted(dir.glob('*')):
-            dir_list.append(c/'Andor')
+        for c in sorted([x for x in dir.iterdir() if x.is_dir()]):
+            dir_list.append(c/data_dir)
             
-        for c in sorted(dir.glob('*/*AI.txt')):
+        for c in sorted(dir.glob('*/*{}'.format(info_file_suffix))):
             info_file_list.append(c)
             
         return dir_list, info_file_list
