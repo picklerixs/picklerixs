@@ -179,8 +179,6 @@ class Rixs:
         self.fig.set_size_inches(*dim)
         if show:
             plt.show()
-        if savefig:
-            plt.savefig(savefig)
         
         if isinstance(header, str):
             self.axs[0].text(0.025, 0.95, header,
@@ -197,16 +195,54 @@ class Rixs:
             self.tfy = (tfy-min(tfy))/(max(tfy)-min(tfy))
         self.ipfy = (ipfy-min(ipfy))/(max(ipfy)-min(ipfy))
         self.y = y
+        if savefig:
+            plt.savefig(savefig)
             
     def plot_xes(
         self,
         idx=1,
         fig=None,
-        ax=None
+        ax=None,
+        xlim=None,
+        ylim=None,
+        color=None,
+        offset=0,
+        dim=[3.25,3.25],
+        x_minor_tick_multiple=None,
+        x_major_tick_multiple=None,
+        savefig=None
     ):
+        fontsize=12
+        
         if fig is None or (ax is None):
-            fig, ax = plt.subplots()
-        ax.plot(self.df.iloc[:,0], self.df.iloc[:,idx])
+            fig, ax = plt.subplots(layout='constrained')
+        if self.calibration_data is not None:
+            x = self.calibration_data
+        else:
+            x = self.df.iloc[:,0]
+            
+        ax.plot(x, self.df.iloc[:,idx]+offset, color=color)
+        if xlim is not None:
+            ax.set_xlim(xlim)
+        if ylim is not None:
+            ax.set_ylim(ylim)
+            
+        ax.tick_params(labelsize=fontsize)
+            
+        ax.set_xlabel('Emission Energy (eV)', fontsize=fontsize)
+        ax.set_ylabel('Intensity (a.u.)', fontsize=fontsize)
+        ax.set_yticks([])
+        if x_minor_tick_multiple:
+            ax.xaxis.set_minor_locator(MultipleLocator(x_minor_tick_multiple))
+        if x_major_tick_multiple:
+            ax.xaxis.set_major_locator(MultipleLocator(x_major_tick_multiple))
+        
+        fig.set_size_inches(*dim)
+        
+        if savefig:
+            fig.savefig(savefig)
+        return fig, ax
+            
         
 class Util:
     @staticmethod
