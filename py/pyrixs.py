@@ -17,6 +17,7 @@ class Rixs:
         self,
         spec_dir,
         info_file,
+        calibration_data=None,
         **kwargs
     ):
         '''
@@ -43,6 +44,8 @@ class Rixs:
             self.df = self.data_list[0]
         self.info_df = pd.read_csv(pathlib.Path(info_file, **kwargs), skiprows=12, sep=r'\t', engine='python')
         
+        self.calibration_data = np.array(calibration_data)
+        
     def plot_mrixs(
         self,
         show=False,
@@ -63,9 +66,17 @@ class Rixs:
         dim=[3.25,3.25],
         xlim=[0,2047],
         header=None,
-        tfy_skip=None
+        tfy_skip=None,
+        x_minor_tick_multiple=1,
+        y_major_tick_multiple=4,
+        y_minor_tick_multiple=1
     ):
         fontsize=12
+        font_family='Arial'
+        axes_linewidth=2.25
+        tick_linewidth=axes_linewidth*.9
+        tick_length=tick_linewidth*5
+        
         self.fig, self.axs = plt.subplots(1, 2, layout='constrained', gridspec_kw={'width_ratios': [1, 0.25]})
 
         if drop is None:
@@ -86,7 +97,10 @@ class Rixs:
             warnings.warn('Deleted row(s) {}.'.format(drop))
             
         I0 = np.array(self.info_df[izero])
-        x = np.array(self.df['X'])
+        if self.calibration_data is not None:
+            x = self.calibration_data
+        else:
+            x = np.array(self.df['X'])
         y = np.array(self.info_df['BL 8 Energy'])
         Z = np.array(self.df.iloc[:, 1:]).transpose()
         
@@ -96,7 +110,9 @@ class Rixs:
             Z[:,i] = Z[:,i]/I0[i]
             
         # print(Z.argmax())
-        Z = (Z-Z.min())/(Z[:,min(xlim):max(xlim)].max()-Z.min())
+        idxmin = abs(x - xlim[0]).argmin()
+        idxmax = abs(x - xlim[1]).argmin()
+        Z = (Z-Z.min())/(Z[:,idxmin:idxmax].max()-Z.min())
         # print(Z.max(keepdims=True))
         
         pc = self.axs[0].pcolormesh(x, y, Z, linewidth=0, antialiased=True, alpha=1, edgecolor='face', rasterized=True, vmin=0, vmax=1)
@@ -143,18 +159,22 @@ class Rixs:
             # a.set_ylabel(ylabel, fontsize=fontsize, labelpad=labelpad*2/3)
             # a.set_xlabel(xlabel, fontsize=fontsize, labelpad=labelpad*2/3)
             a.tick_params(labelsize=fontsize)
-            # self.axs.xaxis.set_tick_params(width=tick_linewidth, length=tick_length, which='major')
-            # self.axs.xaxis.set_tick_params(width=tick_linewidth, length=tick_length*0.5, which='minor')
-            # self.axs.yaxis.set_tick_params(width=tick_linewidth, length=tick_length, which='major')
-            # self.axs.yaxis.set_tick_params(width=tick_linewidth, length=tick_length*0.5, which='minor')
-            a.yaxis.set_minor_locator(MultipleLocator(1))
-        self.axs[0].set_xlabel('Emission Energy (a.u.)', fontsize=fontsize)
+            # a.xaxis.set_tick_params(width=tick_linewidth, length=tick_length, which='major')
+            # a.xaxis.set_tick_params(width=tick_linewidth, length=tick_length*0.5, which='minor')
+            # a.yaxis.set_tick_params(width=tick_linewidth, length=tick_length, which='major')
+            # a.yaxis.set_tick_params(width=tick_linewidth, length=tick_length*0.5, which='minor')
+            
+            a.yaxis.set_major_locator(MultipleLocator(y_major_tick_multiple))
+            a.yaxis.set_minor_locator(MultipleLocator(y_minor_tick_multiple))
+        self.axs[0].set_xlabel('Emission Energy (eV)', fontsize=fontsize)
         self.axs[1].set_xlabel('Norm.\n Intensity', fontsize=fontsize)
 
         self.axs[0].set_ylabel('Excitation Energy (eV)', fontsize=fontsize)
         
         self.axs[1].set_xticks([])
         self.axs[1].set_yticks([])
+        
+        self.axs[0].xaxis.set_minor_locator(MultipleLocator(x_minor_tick_multiple))
         
         self.fig.set_size_inches(*dim)
         if show:
@@ -169,6 +189,14 @@ class Rixs:
                         transform=self.axs[0].transAxes,
                         fontsize=fontsize,
                         color='white')
+        
+        if plot_tfy_masked:
+            self.tfy = (tfy_masked-min(tfy_masked))/(max(tfy_masked)-min(tfy_masked))
+            self.y_masked = y_masked
+        else:
+            self.tfy = (tfy-min(tfy))/(max(tfy)-min(tfy))
+        self.ipfy = (ipfy-min(ipfy))/(max(ipfy)-min(ipfy))
+        self.y = y
             
     def plot_xes(
         self,

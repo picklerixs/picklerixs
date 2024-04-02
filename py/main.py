@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
 
+from matplotlib import rc, rcParams
+
 
 major_tick_multiple = 5
 minor_tick_multiple = 1
@@ -54,7 +56,7 @@ pyrixs.Util.replace_entries(rixs_list[0], rixs_list[1])
 rixs_list[0].plot_mrixs(show=False, plot_ipfy=True, plot_tfy=False, plot_tfy_masked=True, ipfy_lim=ipfy_lim, dim=[4.5,2.5], xlim=xlim, header='CoN')
 # rixs_list[2].plot_mrixs(show=False, plot_ipfy=True, plot_tfy=False, plot_tfy_masked=True, ipfy_lim=ipfy_lim, dim=[4.5,2.5], xlim=xlim, header='Co(CO)N')
 
-
+rixs_list_new = [rixs_list[0]]
 # print(rixs0.df)
 
 # for i in range(len(dir_list)):
@@ -78,6 +80,39 @@ for i in [0,1,3]:
     else:
         header = header_list[i]
     rixs.plot_mrixs(show=False, plot_ipfy=True, ipfy_lim=ipfy_lim, izero=izero, drop=drop, dim=[4.5,2.5], xlim=xlim, header=header)
+    rixs_list_new.append(rixs)
+        
+
+fontsize=22
+labelsize=22
+linewidth=3
+
+font_family='Arial'
+axes_linewidth=2.25
+tick_linewidth=axes_linewidth*.9
+tick_length=tick_linewidth*5
+marker_size=9
+marker_edge_width=linewidth/2
+labelpad=15
+
+rc('font',**{'family':'sans-serif','sans-serif':[font_family]})
+rc('text', usetex=False)
+
+fig, ax = plt.subplots(layout='constrained')
+
+for rixs in rixs_list_new:
+    ax.plot(rixs.y, rixs.ipfy)
+ax.legend(['CoN','CoCl','CoN3','Co(CO)N'])
+
+i = 0    
+fig, ax = plt.subplots(layout='constrained')
+for rixs in rixs_list_new:
+    if i == 0:
+        ax.plot(rixs.y_masked, rixs.tfy)
+    else:
+        ax.plot(rixs.y, rixs.tfy)
+    i += 1
+ax.legend(['CoN','CoCl','CoN3','Co(CO)N'])
 
 # fig, ax = plt.subplots()
 # for i in [-2,-1]:
