@@ -1,0 +1,15 @@
+Date: 3/28/2024
+
+Start, Stop, Increment
+Mono Energy
+Start: 572.00000000
+Stop: 580.00000000
+Increment: 0.40000000
+Delay After Move (s): 0.00000000
+Count Time (s): 1.00000000
+Scan Number: 1
+Bi-directional: No
+Stay at End: 0
+Description Length: 2
+S8
+Time (s)	Mono Energy	Undulator Gap	Mono Energy	Mono Energy Goal	Beam Current	Storage Ring Energy	Gate	Counter 0	Counter 1	Counter 2	Counter 3	Counter 4	Counter 5	Counter 6	User Ring Energy	M1 AI Correlation Size	M1 AI Correlation Waveform	LabVIEW Memory
