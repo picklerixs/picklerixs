@@ -243,6 +243,66 @@ class Rixs:
             fig.savefig(savefig)
         return fig, ax
             
+            
+class Xas:
+    # TODO read csv header to JSON/dict
+    def __init__(
+        self,
+        spec_dir,
+        id,
+        prefix='SigScan',
+        calibration_data=None,
+        **kwargs
+    ):
+        self.spec_dir = pathlib.Path(spec_dir, **kwargs)
+        data_list = []
+        self.id_list = ['{}{}'.format(prefix, x) for x in id]
+
+        self.child_list = self.spec_dir.glob('{}*.txt'.format(prefix))
+        self.child_list = sorted(self.child_list)
+        self.child_list = [x for x in self.child_list if x.stem in self.id_list]
+        for c in self.child_list:
+            data_list.append(pd.read_csv(c, skiprows=14, sep=r'\t', engine='python'))
+            
+        self.data_list = data_list
+        if len(self.data_list) > 1:
+            self.df = reduce(lambda df0, df1: df0.combine(df1, lambda x0, x1: np.average([x0, x1], axis=0)), self.data_list)
+            # self.df = pd.concat([d.set_index('X') for d in self.data_list], axis=1, join='inner').reset_index()
+        else:
+            self.df = self.data_list[0]
+        # self.info_df = pd.read_csv(pathlib.Path(info_file, **kwargs), skiprows=12, sep=r'\t', engine='python')
+        
+    def plot(
+        self,
+        fig=None,
+        ax=None,
+        x='Mono Energy',
+        y='Counter 2',
+        i0='Counter 0',
+        apply_plot_opts=True,
+        norm='minmax',
+        plot_opts_kwargs=None,
+        **kwargs
+    ):
+        if y == 'TEY':
+            y = 'Counter 1'
+        elif y == 'TFY':
+            y = 'Counter 2'
+        if not ax:
+            fig, ax = plt.subplots(layout='constrained')
+        y_arr = self.df[y]/self.df[i0]
+        if norm:
+            y_arr = (y_arr-min(y_arr))/(max(y_arr)-min(y_arr))
+        ax.plot(self.df['Mono Energy'], y_arr)
+        
+        if not plot_opts_kwargs:
+            plot_opts_kwargs = {}
+        
+        if apply_plot_opts:
+            Util.plot_opts(fig, ax, **plot_opts_kwargs)
+        
+        return fig, ax
+            
         
 class Util:
     @staticmethod
@@ -301,3 +361,29 @@ class Util:
     ):
         idxs = [ idx for idx,el in enumerate(arr) if (np.abs(el - val) < tol)]
         return idxs[0] if len(idxs) != 0 else np.nan
+    
+    @staticmethod
+    def plot_opts(
+        fig,
+        ax,
+        dim=[3.25,3.25],
+        fontsize=12,
+        xmintm=1,
+        xmajtm=5,
+        xlabel='Excitation Energy (eV)',
+        ylabel='Intensity (a.u.)',
+        xticks=None,
+        yticks=[]
+    ):
+        fig.set_size_inches(*dim)
+        ax.set_xlabel(xlabel, fontsize=fontsize)
+        ax.set_ylabel(ylabel, fontsize=fontsize)
+        if xmintm:
+            ax.xaxis.set_minor_locator(MultipleLocator(xmintm))
+        if xmajtm:
+            ax.xaxis.set_major_locator(MultipleLocator(xmajtm))
+        if xticks is not None:
+            ax.set_xticks(xticks)
+        if yticks is not None:
+            ax.set_yticks(yticks)
+        ax.tick_params(labelsize=fontsize)
