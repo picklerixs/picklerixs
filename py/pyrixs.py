@@ -282,6 +282,7 @@ class Xas:
         apply_plot_opts=True,
         norm='minmax',
         plot_opts_kwargs=None,
+        offset=0,
         **kwargs
     ):
         if y == 'TEY':
@@ -293,7 +294,8 @@ class Xas:
         y_arr = self.df[y]/self.df[i0]
         if norm:
             y_arr = (y_arr-min(y_arr))/(max(y_arr)-min(y_arr))
-        ax.plot(self.df['Mono Energy'], y_arr)
+        y_arr += offset
+        ax.plot(self.df['Mono Energy'], y_arr, **kwargs)
         
         if not plot_opts_kwargs:
             plot_opts_kwargs = {}
