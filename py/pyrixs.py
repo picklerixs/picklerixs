@@ -69,7 +69,9 @@ class Rixs:
         tfy_skip=None,
         x_minor_tick_multiple=1,
         y_major_tick_multiple=4,
-        y_minor_tick_multiple=1
+        y_minor_tick_multiple=1,
+        vmin=0,
+        vmax=1
     ):
         fontsize=12
         font_family='Arial'
@@ -115,7 +117,7 @@ class Rixs:
         Z = (Z-Z.min())/(Z[:,idxmin:idxmax].max()-Z.min())
         # print(Z.max(keepdims=True))
         
-        pc = self.axs[0].pcolormesh(x, y, Z, linewidth=0, antialiased=True, alpha=1, edgecolor='face', rasterized=True, vmin=0, vmax=1)
+        pc = self.axs[0].pcolormesh(x, y, Z, linewidth=0, antialiased=True, alpha=1, edgecolor='face', rasterized=True, vmin=vmin, vmax=vmax)
         cbar = self.fig.colorbar(pc)
 
         # print(self.df.columns)
@@ -252,6 +254,7 @@ class Xas:
         id,
         prefix='SigScan',
         calibration_data=None,
+        skiprows=14,
         **kwargs
     ):
         self.spec_dir = pathlib.Path(spec_dir, **kwargs)
@@ -262,7 +265,7 @@ class Xas:
         self.child_list = sorted(self.child_list)
         self.child_list = [x for x in self.child_list if x.stem in self.id_list]
         for c in self.child_list:
-            data_list.append(pd.read_csv(c, skiprows=14, sep=r'\t', engine='python'))
+            data_list.append(pd.read_csv(c, skiprows=skiprows, sep=r'\t', engine='python'))
             
         self.data_list = data_list
         if len(self.data_list) > 1:
