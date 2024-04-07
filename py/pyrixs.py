@@ -218,9 +218,15 @@ class Rixs:
         savefig=None,
         filter=None,
         filter_args=None,
-        filter_kwargs=None
+        filter_kwargs=None,
+        norm='minmax',
+        norm_kwargs=None,
+        # fontsize=12,
+        apply_plot_opts=True,
+        plot_opts_kwargs={
+            'xlabel': 'Emission Energy (eV)'
+        }
     ):
-        fontsize=12
         
         if fig is None or (ax is None):
             fig, ax = plt.subplots(layout='constrained')
@@ -239,23 +245,41 @@ class Rixs:
         else:
             y = self.df.iloc[:,idx]
             
+        if norm == 'minmax':
+            y = (y-min(y))/(max(y)-min(y))
+        elif norm == 'area':
+            if norm_kwargs is None:
+                norm_kwargs = {}
+            _, _, _, area = Util.integrate(
+                x,
+                y,
+                xlim,
+                **norm_kwargs
+            )
+            y = y/area
+            
         ax.plot(x, y+offset, color=color)
         if xlim is not None:
             ax.set_xlim(xlim)
         if ylim is not None:
             ax.set_ylim(ylim)
             
-        ax.tick_params(labelsize=fontsize)
+        # ax.tick_params(labelsize=fontsize)
             
-        ax.set_xlabel('Emission Energy (eV)', fontsize=fontsize)
-        ax.set_ylabel('Intensity (a.u.)', fontsize=fontsize)
-        ax.set_yticks([])
-        if x_minor_tick_multiple:
-            ax.xaxis.set_minor_locator(MultipleLocator(x_minor_tick_multiple))
-        if x_major_tick_multiple:
-            ax.xaxis.set_major_locator(MultipleLocator(x_major_tick_multiple))
+        # ax.set_xlabel('Emission Energy (eV)', fontsize=fontsize)
+        # ax.set_ylabel('Intensity (a.u.)', fontsize=fontsize)
+        # ax.set_yticks([])
+        # if x_minor_tick_multiple:
+        #     ax.xaxis.set_minor_locator(MultipleLocator(x_minor_tick_multiple))
+        # if x_major_tick_multiple:
+        #     ax.xaxis.set_major_locator(MultipleLocator(x_major_tick_multiple))
         
         fig.set_size_inches(*dim)
+        
+        if plot_opts_kwargs is None:
+            plot_opts_kwargs = {}
+        if apply_plot_opts:
+            Util.plot_opts(fig, ax, **plot_opts_kwargs)
         
         if savefig:
             fig.savefig(savefig)
@@ -396,7 +420,9 @@ class Util:
         xlabel='Excitation Energy (eV)',
         ylabel='Intensity (a.u.)',
         xticks=None,
-        yticks=[]
+        yticks=[],
+        axis_linewidth=None,
+        linewidth=None
     ):
         fig.set_size_inches(*dim)
         ax.set_xlabel(xlabel, fontsize=fontsize)
@@ -411,6 +437,19 @@ class Util:
             ax.set_yticks(yticks)
         ax.tick_params(labelsize=fontsize)
         
+        if axis_linewidth:
+            for axis in ['top','bottom','left','right']:
+                ax.spines[axis].set_linewidth(axis_linewidth)
+            tick_linewidth = axis_linewidth*0.9
+            tick_length = tick_linewidth*5
+            ax.tick_params(width=tick_linewidth, which='both')
+            ax.xaxis.set_tick_params(length=tick_length, which='major')
+            ax.xaxis.set_tick_params(length=tick_length*0.5, which='minor')
+            
+        if linewidth:
+            for line in ax.lines:
+                line.set_linewidth(linewidth)
+        
     # TODO add logic to input idxmin, idxmax directly instead of searching for xlim if desired
     @staticmethod
     def integrate(
@@ -423,13 +462,19 @@ class Util:
         idxmin = abs(x - xlim[0]).argmin()
         idxmax = abs(x - xlim[1]).argmin()
         
-        x = x.iloc[idxmin:idxmax]
-        y = y.iloc[idxmin:idxmax]
+        x = np.array(x)
+        y = np.array(y)
+        
+        x = x[idxmin:idxmax]
+        y = y[idxmin:idxmax]
+        
+        # x = x.iloc[idxmin:idxmax]
+        # y = y.iloc[idxmin:idxmax]
         
         if background == 'linear':
             background_res = linregress(
-                np.concatenate([x.iloc[:background_points[0]], x.iloc[-background_points[1]:]]),
-                np.concatenate([y.iloc[:background_points[0]], y.iloc[-background_points[1]:]])
+                np.concatenate([x[:background_points[0]], x[-background_points[1]:]]),
+                np.concatenate([y[:background_points[0]], y[-background_points[1]:]])
             )
             y_background = background_res.slope*x + background_res.intercept
             y_no_background = y - y_background
