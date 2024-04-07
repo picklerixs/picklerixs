@@ -6,6 +6,8 @@ import xarray as xr
 import pathlib
 import warnings
 
+from scipy.integrate import trapezoid
+from scipy.stats import linregress
 from functools import reduce
 from matplotlib.ticker import MultipleLocator
 
@@ -305,6 +307,8 @@ class Xas:
         
         if apply_plot_opts:
             Util.plot_opts(fig, ax, **plot_opts_kwargs)
+            
+        self.y_arr = y_arr
         
         return fig, ax
             
@@ -392,3 +396,32 @@ class Util:
         if yticks is not None:
             ax.set_yticks(yticks)
         ax.tick_params(labelsize=fontsize)
+        
+    # TODO add logic to input idxmin, idxmax directly instead of searching for xlim if desired
+    @staticmethod
+    def integrate(
+        x,
+        y,
+        xlim,
+        background='linear',
+        background_points=[4,4]
+    ):
+        idxmin = abs(x - xlim[0]).argmin()
+        idxmax = abs(x - xlim[1]).argmin()
+        
+        x = x.iloc[idxmin:idxmax]
+        y = y.iloc[idxmin:idxmax]
+        
+        if background == 'linear':
+            background_res = linregress(
+                np.concatenate([x.iloc[:background_points[0]], x.iloc[-background_points[1]:]]),
+                np.concatenate([y.iloc[:background_points[0]], y.iloc[-background_points[1]:]])
+            )
+            y_background = background_res.slope*x + background_res.intercept
+            y_no_background = y - y_background
+        else:
+            y_no_background = y
+            
+        area = trapezoid(y_no_background, x=x)
+            
+        return x, y, y_background, area
