@@ -8,6 +8,7 @@ import warnings
 
 from scipy.integrate import trapezoid
 from scipy.stats import linregress
+from scipy.signal import savgol_filter
 from functools import reduce
 from matplotlib.ticker import MultipleLocator
 
@@ -214,7 +215,10 @@ class Rixs:
         dim=[3.25,3.25],
         x_minor_tick_multiple=None,
         x_major_tick_multiple=None,
-        savefig=None
+        savefig=None,
+        filter=None,
+        filter_args=None,
+        filter_kwargs=None
     ):
         fontsize=12
         
@@ -225,7 +229,17 @@ class Rixs:
         else:
             x = self.df.iloc[:,0]
             
-        ax.plot(x, self.df.iloc[:,idx]+offset, color=color)
+        if filter_args is None:
+            filter_args = []
+        if filter_kwargs is None:
+            filter_kwargs = {}
+            
+        if filter:
+            y = savgol_filter(self.df.iloc[:,idx], *filter_args, **filter_kwargs)
+        else:
+            y = self.df.iloc[:,idx]
+            
+        ax.plot(x, y+offset, color=color)
         if xlim is not None:
             ax.set_xlim(xlim)
         if ylim is not None:
