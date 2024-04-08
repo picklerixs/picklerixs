@@ -47,7 +47,10 @@ class Rixs:
             self.df = self.data_list[0]
         self.info_df = pd.read_csv(pathlib.Path(info_file, **kwargs), skiprows=12, sep=r'\t', engine='python')
         
-        self.calibration_data = np.array(calibration_data)
+        if calibration_data is not None:
+            self.calibration_data = np.array(calibration_data)
+        else:
+            self.calibration_data = None
         
     def plot_mrixs(
         self,
@@ -218,8 +221,6 @@ class Rixs:
         color=None,
         offset=0,
         dim=[3.25,3.25],
-        x_minor_tick_multiple=None,
-        x_major_tick_multiple=None,
         savefig=None,
         filter=None,
         filter_args=None,
@@ -250,6 +251,11 @@ class Rixs:
         else:
             y = self.df.iloc[:,idx]
             
+        if xlim is not None:
+            xidx = [np.argmin(abs(x-xlim[0])), np.argmin(abs(x-xlim[1]))]            
+            x = x[xidx[0]:xidx[1]]
+            y = y[xidx[0]:xidx[1]]
+            
         if norm == 'minmax':
             y = (y-min(y))/(max(y)-min(y))
         elif norm == 'area':
@@ -262,6 +268,7 @@ class Rixs:
                 **norm_kwargs
             )
             y = y/area
+            print(area)
             
         ax.plot(x, y+offset, color=color)
         if xlim is not None:
@@ -279,7 +286,7 @@ class Rixs:
         # if x_major_tick_multiple:
         #     ax.xaxis.set_major_locator(MultipleLocator(x_major_tick_multiple))
         
-        fig.set_size_inches(*dim)
+        # fig.set_size_inches(*dim)
         
         if plot_opts_kwargs is None:
             plot_opts_kwargs = {}
