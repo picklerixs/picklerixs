@@ -74,7 +74,11 @@ class Rixs:
         y_major_tick_multiple=4,
         y_minor_tick_multiple=1,
         vmin=0,
-        vmax=1
+        vmax=1,
+        fig=None,
+        ax=None,
+        cmap='viridis',
+        cbar=True
     ):
         fontsize=12
         font_family='Arial'
@@ -120,8 +124,9 @@ class Rixs:
         Z = (Z-Z.min())/(Z[:,idxmin:idxmax].max()-Z.min())
         # print(Z.max(keepdims=True))
         
-        pc = self.axs[0].pcolormesh(x, y, Z, linewidth=0, antialiased=True, alpha=1, edgecolor='face', rasterized=True, vmin=vmin, vmax=vmax)
-        cbar = self.fig.colorbar(pc)
+        pc = self.axs[0].pcolormesh(x, y, Z, linewidth=0, antialiased=True, alpha=1, edgecolor='face', rasterized=True, vmin=vmin, vmax=vmax, cmap=cmap)
+        if cbar:
+            cbar = self.fig.colorbar(pc)
 
         # print(self.df.columns)
 
