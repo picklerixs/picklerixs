@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 import xarray as xr
 import pathlib
 import warnings
@@ -89,6 +88,11 @@ class Rixs:
         tick_linewidth=axes_linewidth*.9
         tick_length=tick_linewidth*5
         
+        # if fig:
+        #     self.fig = fig
+        # if ax:
+        #     self.axs = ax
+        
         self.fig, self.axs = plt.subplots(1, 2, layout='constrained', gridspec_kw={'width_ratios': [1, 0.25]})
 
         if drop is None:
@@ -164,8 +168,8 @@ class Rixs:
 
         self.axs[0].set_xlim(xlim)
         self.axs[1].set_xlim([-0.1,1.1])
-        self.axs[0].set_ylim([775,788])
-        self.axs[1].set_ylim([775,788])
+        self.axs[0].set_ylim([773,787])
+        self.axs[1].set_ylim([773,787])
 
 
         for a in self.axs:
