@@ -1,0 +1,14 @@
+
+Andor
+Scan Type: One Motor From File
+C:\Beamline Controls\BCS Setup Data\Scan Files\Zakaria\FeL23-nonres.txt
+X Motor: BL 8 Energy
+Delay After Move (s): 0.10000000
+Stay at End: 0
+Curvature: 0.0
+Clip to ROI: No
+ROI: 1309 526 2539 1627
+Background ROI: None
+Data File Path: C:\Beamline Controls\BCS Setup Data\240607\CCD Scan 7018
+Time	Frame #	BL 8 Energy	Izero	Izero 2	TFY	TEY	Beam Current	Total Flux	Counts	Background	Filename
+06:34:31	1.00000000	740.00117242	1968067.00000000	75942.00000000	301552.00000000	27905.00000000	0.00000000	0.00000000	1569181.00000000	327.00000000	CoN7018-00001
