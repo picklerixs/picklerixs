@@ -1,0 +1,17 @@
+Date: 6/6/2024
+
+From File
+Mono Energy
+C:\Beamline Controls\BCS Setup Data\Scan Files\Zakaria Long Pickle RIXS\FeL23-fine.txt
+: 290.00000000
+: 320.00000000
+: 0.05000000
+Delay After Move (s): 0.00000000
+Count Time (s): 0.80000000
+Scan Number: 1
+Bi-directional: No
+Stay at End: 0
+Description Length: 2
+S8
+Time (s)	Mono Energy	Undulator Gap	Mono Energy	Mono Energy Goal	Beam Current	Storage Ring Energy	Gate	Counter 0	Counter 1	Counter 2	Counter 3	Counter 4	Counter 5	Counter 6	User Ring Energy	M1 AI Correlation Size	M1 AI Correlation Waveform	LabVIEW Memory
+626.52400000	702.00300978	0.00000000	0.00000000	0.00000000	500.23490906	1.89278102	0.00000000	35715.00000000	685.00000000	2357.00000000	1335.00000000	0.00000000	0.00000000	0.00000000	1.93929510	0.00000000	0.00000000	0.00000000
