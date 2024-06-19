@@ -11,47 +11,185 @@ from scipy.signal import savgol_filter
 from functools import reduce
 from matplotlib.ticker import MultipleLocator
 
-# TODO implement interactive mRIXS plots
-# TODO make masking of XAS data user-specifiable and not jank
-# TODO clean up plot styling options
 class Rixs:        
     def __init__(
         self,
-        spec_dir,
-        info_file,
+        expt_path,
         calibration_data=None,
         **kwargs
     ):
         '''
-        Methods for processing data from iRIXS.
-        Generates a dataframe containing detector information (info_df) and a dataframe containing 1D spectral data (df).
+        Methods for processing and visualizing RIXS data. Generates an xr.Dataset instance whose dimensions are excitation energy (excitation_energy)
+        and CCD pixel (ccd_pixel) and that contains mRIXS and XAS data read from Andor output.
         
         ARGS:
-            spec_dir (str or pathlib.Path()): Directory containing 1D spectral data in .txt format.
-            info_file (str or pathlib.Path()): Andor detector information file. 
+            expt_path (str or pathlib.Path()): Directory containing Andor information (AI) file and Andor/ directory, which
+                should contain 1D CCD data in .txt format.
             
-        kwargs are passed to pd.read_csv() when attempting to open info_file.
+        TODO:
+            Clean up xr.Dataset variable names
+            Allow loading and plotting of XES data
+            Read RIXS traces based on Filename in ds
+            Implement elastic peak fitting method(s)
+            Add support for other endstations (e.g. SALSA)
+            Implement interactive mRIXS plots (including interactive (i)PFY selection)
+            Clean up plot styling options
+            Add methods to combine multiple mRIXS figures together (gridspec?)
         '''
-        self.spec_dir = pathlib.Path(spec_dir, **kwargs)
-        data_list = []
-        self.child_list = self.spec_dir.glob('*-1D.txt')
-        self.child_list = sorted(self.child_list)
+        self.expt_path = pathlib.Path(expt_path)
+
+        # read and clean Andor info (AI) file
+        self.ai_path = sorted(self.expt_path.glob('*AI.txt'))
+        if len(self.ai_path) > 1:
+            warnings.warn('More than one Andor info file found.')
+        self.ai_path = self.ai_path[0]
+        ai_df = pd.read_table(self.ai_path, skiprows=12)
+        self.ds = xr.Dataset(ai_df)
+        self.ds = self.ds.assign_coords({'excitation_energy': self.ds['BL 8 Energy']})
+        self.ds = self.ds.swap_dims({'dim_0': 'excitation_energy'})
+        self.ds = self.ds.drop_vars('dim_0')
+
+        # read RIXS traces
+        self.spec_path = sorted(self.expt_path.glob('Andor'))
+        if len(self.spec_path) > 1:
+            warnings.warn('More than one Andor directory found.')
+        self.spec_path = self.spec_path[0]
+
+        self.data_list = []
+        self.child_list = sorted(self.spec_path.glob('*-1D.txt'))
         for c in self.child_list:
-            data_list.append(pd.read_csv(c, skiprows=9, sep=r'\t', engine='python'))
-            
-        self.data_list = data_list
+            self.data_list.append(pd.read_csv(c, skiprows=9, sep=r'\t', engine='python'))
+        # concatenate RIXS traces by aligning on X (CCD pixels)
         if len(self.data_list) > 1:
-            self.df = pd.concat([d.set_index('X') for d in self.data_list], axis=1, join='inner').reset_index()
+            df = pd.concat([d.set_index('X') for d in self.data_list], axis=1, join='inner').reset_index()
         else:
-            self.df = self.data_list[0]
-        self.info_df = pd.read_csv(pathlib.Path(info_file, **kwargs), skiprows=12, sep=r'\t', engine='python')
-        
-        if calibration_data is not None:
+            df = self.data_list[0]
+        df.drop('X', axis=1, inplace=True)
+        self.da = xr.DataArray(
+            data=df,
+            dims=['ccd_pixel', 'excitation_energy'],
+            coords={
+                'ccd_pixel': list(range(2048)),
+                'excitation_energy': self.ds['excitation_energy']
+            }
+        )
+        self.ds = self.ds.merge({'rixs_intensity': self.da})
+
+        if calibration_data:
             self.calibration_data = np.array(calibration_data)
         else:
             self.calibration_data = None
+        self.normalize_to_flux()
+        print(self.ds)
+            
+    def calc_ipfy():
+        pass
+            
+    def calc_pfy():
+        pass
+    
+    def fit_elastic_line():
+        pass
+    
+    def normalize_to_flux(
+        self,
+        i_0='Izero',
+        target_vars=['rixs_intensity', 'TFY', 'TEY', 'PFY']
+    ):
+        '''
+        Normalize target variables to x-ray flux.
+        
+        ARGS:
+            i_0 (str or list-like of float): Variable name corresponding to x-ray flux in self.ds or an array of flux values.
+        '''
+        if isinstance(i_0, str):
+            i_0 = self.ds[i_0]
+        for var in target_vars:
+            try:
+                self.ds = self.ds.merge({
+                    'norm_{}'.format(var): self.ds[var]/i_0
+                })
+            except:
+                warnings.warn('Target variable {} not found or invalid i_0 specified.'.format(var))
+        
+        
+    def plot_xes():
+        '''
+        Plot one or more XES traces.
+        '''
+        pass
         
     def plot_mrixs(
+        self,
+        plot_tfy=False,
+        plot_tey=True,
+        xlim=None,
+        # kwargs passed to plt.pcolormesh()
+        alpha=1,
+        antialiased=True,
+        cmap='jet',
+        edgecolor='face',
+        linewidth=0,
+        rasterized=False,
+        shading='gouraud',
+        **kwargs
+    ):
+        '''
+        Plot mRIXS and XAS data.
+        
+        KWARGS:
+            plot_tfy (bool): Whether to plot TFY data.
+            plot_tey (bool): Whether to plot TEY data.
+            xlim (list-like): x-limits of mRIXS plot.
+            
+        Additional kwargs are passed to plt.colormesh().
+        '''
+        self.fig, self.axs = plt.subplots(
+            1,
+            2,
+            layout='constrained',
+            gridspec_kw={'width_ratios': [1, 0.25]}
+        )
+        
+        pc = self.axs[0].pcolormesh(
+            self.ds['ccd_pixel'],
+            self.ds['excitation_energy'], 
+            self.ds['norm_rixs_intensity'].transpose(), 
+            linewidth=linewidth, 
+            antialiased=antialiased, 
+            alpha=alpha, 
+            edgecolor=edgecolor,
+            rasterized=rasterized,
+            vmin=self.ds['norm_rixs_intensity'].min(), 
+            vmax=self.ds['norm_rixs_intensity'].max(), 
+            cmap=cmap,
+            shading=shading,
+            **kwargs
+        )
+        
+        if plot_tfy:
+            self.axs[1].plot(
+                (self.ds['norm_TFY']-self.ds['norm_TFY'].min())/(self.ds['norm_TFY'].max()-self.ds['norm_TFY'].min()),
+                self.ds['excitation_energy']
+            )
+            
+        if plot_tey:
+            self.axs[1].plot(
+                (self.ds['norm_TEY']-self.ds['norm_TEY'].min())/(self.ds['norm_TEY'].max()-self.ds['norm_TEY'].min()),
+                self.ds['excitation_energy']
+            )
+            
+        for ax in self.axs:
+            ax.set_ylim([
+                self.ds['excitation_energy'].min(),
+                self.ds['excitation_energy'].max()
+            ])
+        
+        if xlim:
+            self.axs[0].set_xlim(xlim)
+        
+        
+    def plot_mrixs_legacy(
         self,
         show=False,
         savefig=None,
