@@ -123,7 +123,9 @@ class Rixs:
         self,
         plot_tfy=False,
         plot_tey=True,
+        savefig=False,
         xlim=None,
+        width_ratios=(1, 0.25),
         # kwargs passed to plt.pcolormesh()
         alpha=1,
         antialiased=True,
@@ -141,6 +143,7 @@ class Rixs:
             plot_tfy (bool): Whether to plot TFY data.
             plot_tey (bool): Whether to plot TEY data.
             xlim (list-like): x-limits of mRIXS plot.
+            width_ratios (list-like): Relative widths of mRIXS and XAS plots.
             
         Additional kwargs are passed to plt.colormesh().
         '''
@@ -148,7 +151,7 @@ class Rixs:
             1,
             2,
             layout='constrained',
-            gridspec_kw={'width_ratios': [1, 0.25]}
+            gridspec_kw={'width_ratios': width_ratios}
         )
         
         pc = self.axs[0].pcolormesh(
@@ -167,12 +170,12 @@ class Rixs:
             **kwargs
         )
         
+        # XAS is automatically min-max normalized
         if plot_tfy:
             self.axs[1].plot(
                 (self.ds['norm_TFY']-self.ds['norm_TFY'].min())/(self.ds['norm_TFY'].max()-self.ds['norm_TFY'].min()),
                 self.ds['excitation_energy']
             )
-            
         if plot_tey:
             self.axs[1].plot(
                 (self.ds['norm_TEY']-self.ds['norm_TEY'].min())/(self.ds['norm_TEY'].max()-self.ds['norm_TEY'].min()),
@@ -187,6 +190,9 @@ class Rixs:
         
         if xlim:
             self.axs[0].set_xlim(xlim)
+            
+        if savefig:
+            self.fig.savefig(savefig)
         
         
     def plot_mrixs_legacy(
