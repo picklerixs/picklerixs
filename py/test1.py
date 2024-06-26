@@ -1,11 +1,15 @@
-import pyrixs
+import picklerixs
 import matplotlib.pyplot as plt
 
 def main():
-    for i in ['09','11','10','12']:        
+    i_arr = ['09','11','10','12']
+    for i in i_arr:        
         expt_dir = '../data/irixs/2024-6-6/CCD Scan 70{}'.format(i)
-        rixs = pyrixs.Rixs(expt_dir)
-        rixs.plot_mrixs()
+        rixs = picklerixs.Rixs(expt_dir)
+        rixs.find_elastic_line(xlim=[1000,1500])
+        rixs.fit_elastic_line()
+        rixs.plot_mrixs(xmode='ccd_pixel', plot_elastic_line=True)
+        print(rixs.ccd_pixel_arr)
     plt.show()
 
 if __name__ == '__main__':

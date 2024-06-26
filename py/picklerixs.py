@@ -1,4 +1,5 @@
 import pandas as pd
+import lmfit
 import numpy as np
 import matplotlib.pyplot as plt
 import xarray as xr
@@ -7,7 +8,7 @@ import warnings
 
 from scipy.integrate import trapezoid
 from scipy.stats import linregress
-from scipy.signal import savgol_filter
+from scipy.signal import find_peaks, savgol_filter
 from functools import reduce
 from matplotlib.ticker import MultipleLocator
 
@@ -87,9 +88,81 @@ class Rixs:
             
     def calc_pfy():
         pass
-    
-    def fit_elastic_line():
-        pass
+
+    def find_elastic_line(
+        self,
+        xlim=None,
+        ylim=None,
+        **kwargs
+    ):
+        '''
+        Auto-detect elastic line based on search windows in incident energy vs CCD pixel space.
+
+        ARGS:
+            Rectangular regions in which to search for the elastic line. Syntax: [[xmin, xmax], [ymin, ymax]].
+
+        Additional kwargs are passed to scipy.find_peaks().
+        '''
+        da = self.ds["norm_rixs_intensity"]
+        ccd_pixel = self.ds["ccd_pixel"]
+        idx_arr = []
+        peak_arr = []
+        ccd_pixel_arr = []
+        self.excitation_energy_filtered = self.ds["excitation_energy"]
+        if isinstance(ylim, list):
+            self.excitation_energy_filtered = self.excitation_energy_filtered.where(
+                    self.excitation_energy_filtered > min(ylim)
+            )
+            self.excitation_energy_filtered = self.excitation_energy_filtered.where(
+                    self.excitation_energy_filtered < max(ylim)
+            )
+        if isinstance(xlim, list):
+            da = da.where(da["ccd_pixel"] > min(xlim))
+            da = da.where(da["ccd_pixel"] < max(xlim))
+        for e in self.excitation_energy_filtered:
+            try:
+                rixs_cut = da.sel(excitation_energy=e)
+            except:
+                pass
+            else:
+                idx, _ = find_peaks(rixs_cut, distance=9999, **kwargs)
+                idx_arr.append(idx[0])
+                peak_arr.append(rixs_cut[idx[0]])
+                ccd_pixel_arr.append(ccd_pixel[idx[0]])
+        idx_arr = np.array(idx_arr)
+        peak_arr = np.array(idx_arr)
+        self.ccd_pixel_arr = np.array(ccd_pixel_arr)
+        return self.ccd_pixel_arr, self.excitation_energy_filtered
+
+    def fit_elastic_line(
+        self,
+        overwrite=True
+    ):
+        '''
+        Fit CCD pixel vs excitation energy data
+
+        ARGS:
+            ccd_pixel_arr (np.array): Array of CCD pixel values.
+            excitation_energy_arr (np.array): Array of excitation energies.
+        '''
+        self.params = lmfit.Parameters()
+        self.params.add('a0', value=-np.average(self.excitation_energy_filtered), min=0)
+        self.params.add('a1', value=(np.max(self.excitation_energy_filtered)-np.min(self.excitation_energy_filtered))/np.average(self.ccd_pixel_arr), min=0)
+
+        minimizer = lmfit.Minimizer(lambda params, x, y: params['a0'] + params['a1']*x - y, self.params, fcn_args=(self.ccd_pixel_arr, self.excitation_energy_filtered))
+        self.result = minimizer.minimize()
+        self.fit_energy = self.result.params['a0'].value + self.result.params['a1'].value*self.ds['ccd_pixel']
+
+        try:
+            self.ds["emission_energy"]
+        except:
+            self.ds["emission_energy"] = self.fit_energy
+        else:
+            warnings.warn('Dataset already has emission energy data.')
+            if overwrite:
+                self.ds["emission_energy"] = self.fit_energy
+                warnings.warn('Existing emission energy data overwritten.')
+        return self.fit_energy
     
     def normalize_to_flux(
         self,
@@ -121,10 +194,12 @@ class Rixs:
         
     def plot_mrixs(
         self,
+        plot_elastic_line=False,
         plot_tfy=False,
         plot_tey=True,
         savefig=False,
         xlim=None,
+        xmode='emission_energy',
         width_ratios=(1, 0.25),
         # kwargs passed to plt.pcolormesh()
         alpha=1,
@@ -154,8 +229,18 @@ class Rixs:
             gridspec_kw={'width_ratios': width_ratios}
         )
         
+        if xmode == 'emission_energy':
+            try:
+                self.ds['emission_energy']
+            except:
+                x = self.ds['ccd_pixel']
+            else:
+                x = self.ds['emission_energy']
+        elif xmode == 'ccd_pixel':
+            x = self.ds['ccd_pixel']
+
         pc = self.axs[0].pcolormesh(
-            self.ds['ccd_pixel'],
+            x,
             self.ds['excitation_energy'], 
             self.ds['norm_rixs_intensity'].transpose(), 
             linewidth=linewidth, 
@@ -169,7 +254,18 @@ class Rixs:
             shading=shading,
             **kwargs
         )
-        
+
+        if plot_elastic_line and (xmode == 'ccd_pixel'):
+            self.axs[0].plot(
+                self.ds['ccd_pixel'],
+                self.ds['emission_energy'],
+                'r-'
+            )
+            self.axs[0].plot(
+                self.ccd_pixel_arr,
+                self.excitation_energy_filtered,
+                'gx'
+            )
         # XAS is automatically min-max normalized
         if plot_tfy:
             self.axs[1].plot(
