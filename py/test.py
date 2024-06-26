@@ -1,31 +1,32 @@
-import pyrixs
-import matplotlib.pyplot as plt
 import numpy as np
-import pathlib
 import pandas as pd
+import pathlib
+import warnings
+import xarray as xr
 
+import matplotlib.pyplot as plt
 
-from matplotlib.ticker import MultipleLocator
-from matplotlib import rc, rcParams
+__author__ = 'Isaac Zakaria'
 
-dir = '../data/irixs/2024-6-6'
-dir_list, info_file_list = pyrixs.Util.bulk_data_read(dir)
+def main():
+    expt_dir = '../data/irixs/2024-6-6/CCD Scan 7009'
+    expt_path = pathlib.Path(expt_dir)
 
-ipfy_lim = [0,395]
-xlim = [1060, 1250]
+    # read and clean Andor info (AI) file
+    ai_path = sorted(expt_path.glob('*AI.txt'))
+    if len(ai_path) > 1:
+        warnings.warn('More than one Andor info file found.')
+    ai_path = ai_path[0]
+    ai_df = pd.read_table(ai_path, skiprows=12)
+    ds = xr.Dataset(ai_df)
+    ds = ds.assign_coords({'excitation_energy': ds['BL 8 Energy']})
+    ds = ds.swap_dims({'dim_0': 'excitation_energy'})
+    ds = ds.drop_vars('dim_0')
+    #print(ds)
 
-name_list = [
-    'CoN',
-    'CoN3',
-    'Co(CO)N',
-    'CoCl',
-    'CoNCO'
-]
+    # read XES/RIXS traces
+    xes_path = expt_path.walk()
+    print(xes_path)
 
-# fig, axs = plt.subplots(1,3,layout='constrained')
-for i in range(1,len(dir_list)-3):
-    rixs = pyrixs.Rixs(dir_list[i], info_file_list[i])
-    rixs.plot_mrixs(plot_ipfy=False, ipfy_lim=ipfy_lim, plot_tfy=False, plot_tey=True,
-                    xlim=xlim, header=name_list[i-1],
-                    cmap='plasma')
-plt.show()
+if __name__ == '__main__':
+    main()
