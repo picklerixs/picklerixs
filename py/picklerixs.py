@@ -136,7 +136,8 @@ class Rixs:
 
     def fit_elastic_line(
         self,
-        overwrite=True
+        overwrite=True,
+        custom_params=None,
     ):
         '''
         Fit CCD pixel vs excitation energy data
@@ -145,13 +146,18 @@ class Rixs:
             ccd_pixel_arr (np.array): Array of CCD pixel values.
             excitation_energy_arr (np.array): Array of excitation energies.
         '''
+        if not custom_params:
+            custom_params = []
         self.params = lmfit.Parameters()
-        self.params.add('a0', value=-np.average(self.excitation_energy_filtered), min=0)
-        self.params.add('a1', value=(np.max(self.excitation_energy_filtered)-np.min(self.excitation_energy_filtered))/np.average(self.ccd_pixel_arr), min=0)
+        self.params.add('intercept', value=-np.average(self.excitation_energy_filtered), min=0)
+        self.params.add('slope', value=(np.max(self.excitation_energy_filtered)-np.min(self.excitation_energy_filtered))/np.average(self.ccd_pixel_arr), min=0)
+        self.params.add_many(*custom_params)
 
-        minimizer = lmfit.Minimizer(lambda params, x, y: params['a0'] + params['a1']*x - y, self.params, fcn_args=(self.ccd_pixel_arr, self.excitation_energy_filtered))
+        minimizer = lmfit.Minimizer(lambda params, x, y: params['intercept'] + params['slope']*x - y, self.params, fcn_args=(self.ccd_pixel_arr, self.excitation_energy_filtered))
         self.result = minimizer.minimize()
-        self.fit_energy = self.result.params['a0'].value + self.result.params['a1'].value*self.ds['ccd_pixel']
+        self.intercept = self.result.params['intercept'].value
+        self.slope = self.result.params['slope'].value
+        self.fit_energy = self.intercept + self.slope*self.ds['ccd_pixel']
 
         try:
             self.ds["emission_energy"]
@@ -194,6 +200,7 @@ class Rixs:
         
     def plot_mrixs(
         self,
+        dim=[3.25,3.25],
         plot_elastic_line=False,
         plot_tfy=False,
         plot_tey=True,
@@ -207,7 +214,7 @@ class Rixs:
         cmap='jet',
         edgecolor='face',
         linewidth=0,
-        rasterized=False,
+        rasterized=True,
         shading='gouraud',
         **kwargs
     ):
@@ -286,7 +293,11 @@ class Rixs:
         
         if xlim:
             self.axs[0].set_xlim(xlim)
-            
+        
+        self.axs[0].set_xlabel('Emission Energy (eV)')
+        self.axs[0].set_ylabel('Excitation Energy (eV)')
+        self.fig.set_size_inches(*dim)
+
         if savefig:
             self.fig.savefig(savefig)
         
