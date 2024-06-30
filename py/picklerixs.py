@@ -208,6 +208,11 @@ class Rixs:
         plot_tfy=False,
         plot_tey=True,
         savefig=False,
+        text=None,
+        xmajtm=None,
+        xmintm=None,
+        ymajtm=None,
+        ymintm=None,
         xlim=None,
         xmode='emission_energy',
         width_ratios=(1, 0.25),
@@ -297,8 +302,22 @@ class Rixs:
         if xlim:
             self.axs[0].set_xlim(xlim)
         
+        if xmajtm:
+            self.axs[0].xaxis.set_major_locator(MultipleLocator(xmajtm))
+        if xmintm:
+            self.axs[0].xaxis.set_minor_locator(MultipleLocator(xmintm))
+        if ymajtm:
+            self.axs[0].yaxis.set_major_locator(MultipleLocator(ymajtm))
+            self.axs[1].yaxis.set_major_locator(MultipleLocator(ymajtm))
+        if ymintm:
+            self.axs[0].yaxis.set_minor_locator(MultipleLocator(ymintm))
+            self.axs[1].yaxis.set_minor_locator(MultipleLocator(ymintm))
+
         self.axs[0].set_xlabel('Emission Energy (eV)')
         self.axs[0].set_ylabel('Excitation Energy (eV)')
+        if isinstance(text, str):
+            self.axs[0].text(0.05, 0.925, text, horizontalalignment='left',
+                             verticalalignment='center', transform=self.axs[0].transAxes, color='white')
         self.fig.set_size_inches(*dim)
 
         if savefig:
