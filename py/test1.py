@@ -18,7 +18,7 @@ def main():
         rixs = picklerixs.Rixs(expt_dir)
         rixs.find_elastic_line(xlim=[1000,1500])
         rixs.fit_elastic_line(custom_params=custom_params)
-        rixs.plot_mrixs(dim=[3.75,3], xmode='emission_energy', xlim=[750,815], savefig='CoL3_zoomed{}.png'.format(i))
+        rixs.plot_mrixs(dim=[3.75,2.75], xmode='emission_energy', xlim=[765,795], savefig='CoL3_zoomed_more{}.png'.format(i))
         #rixs.plot_mrixs(xmode='ccd_pixel', plot_elastic_line=True)
         print(rixs.ccd_pixel_arr)
     #plt.show()

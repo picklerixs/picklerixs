@@ -91,6 +91,7 @@ class Rixs:
 
     def find_elastic_line(
         self,
+        distance=9999,
         xlim=None,
         ylim=None,
         **kwargs
@@ -99,7 +100,9 @@ class Rixs:
         Auto-detect elastic line based on search windows in incident energy vs CCD pixel space.
 
         ARGS:
-            Rectangular regions in which to search for the elastic line. Syntax: [[xmin, xmax], [ymin, ymax]].
+            distance: Minimum distance between peaks found by scipy.find_peaks(). Defaults to a large value to find the global maximum and nothing else.
+            xlim: Emission energy window in which to search for the elastic peak (inclusive).
+            ylim: Excitation energy window in which to search for the elastic peak (inclusive).
 
         Additional kwargs are passed to scipy.find_peaks().
         '''
@@ -116,16 +119,16 @@ class Rixs:
             self.excitation_energy_filtered = self.excitation_energy_filtered.where(
                     self.excitation_energy_filtered < max(ylim)
             )
-        if isinstance(xlim, list):
+        if isinstance(xlim, list) or isinstance(xlim, tuple):
             da = da.where(da["ccd_pixel"] > min(xlim))
             da = da.where(da["ccd_pixel"] < max(xlim))
         for e in self.excitation_energy_filtered:
             try:
                 rixs_cut = da.sel(excitation_energy=e)
             except:
-                pass
+                warnings.warn('No RIXS cut found at excitation energy = {} eV.'.format(e))
             else:
-                idx, _ = find_peaks(rixs_cut, distance=9999, **kwargs)
+                idx, _ = find_peaks(rixs_cut, distance=distance, **kwargs)
                 idx_arr.append(idx[0])
                 peak_arr.append(rixs_cut[idx[0]])
                 ccd_pixel_arr.append(ccd_pixel[idx[0]])
