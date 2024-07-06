@@ -10,7 +10,7 @@ def main():
         }
     dir_stem = '../data/irixs/2024-7-5/CCD Scan 171'
     elastic_xlim = [1400,1600]
-    elastic_ylim = [775,778]
+    elastic_ylim = [775,779]
     for i in ['74']:        
         expt_dir = '{}{}'.format(dir_stem, i)
         rixs = picklerixs.Rixs(expt_dir)

@@ -119,6 +119,7 @@ class Rixs:
             self.excitation_energy_filtered = self.excitation_energy_filtered.where(
                     self.excitation_energy_filtered < max(ylim)
             )
+            self.excitation_energy_filtered = self.excitation_energy_filtered.dropna(dim='excitation_energy', how='any')
         if isinstance(xlim, list) or isinstance(xlim, tuple):
             da = da.where(da["ccd_pixel"] > min(xlim))
             da = da.where(da["ccd_pixel"] < max(xlim))
@@ -155,7 +156,9 @@ class Rixs:
         self.params.add('intercept', value=-np.average(self.excitation_energy_filtered), min=0)
         self.params.add('slope', value=(np.max(self.excitation_energy_filtered)-np.min(self.excitation_energy_filtered))/np.average(self.ccd_pixel_arr), min=0)
         self.params.add_many(*custom_params)
-
+        
+        print(self.ccd_pixel_arr)
+        print(self.excitation_energy_filtered)
         minimizer = lmfit.Minimizer(lambda params, x, y: params['intercept'] + params['slope']*x - y, self.params, fcn_args=(self.ccd_pixel_arr, self.excitation_energy_filtered))
         self.result = minimizer.minimize()
         self.intercept = self.result.params['intercept'].value
