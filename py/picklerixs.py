@@ -111,18 +111,23 @@ class Rixs:
         idx_arr = []
         peak_arr = []
         ccd_pixel_arr = []
-        self.excitation_energy_filtered = self.ds["excitation_energy"]
-        if isinstance(ylim, list):
-            self.excitation_energy_filtered = self.excitation_energy_filtered.where(
-                    self.excitation_energy_filtered > min(ylim)
-            )
-            self.excitation_energy_filtered = self.excitation_energy_filtered.where(
-                    self.excitation_energy_filtered < max(ylim)
-            )
+        if isinstance(ylim, list) or isinstance(ylim, tuple):
+            self.excitation_energy_filtered = xr.Dataset(coords={'excitation_energy': np.nan})
+            for ylim_i in ylim:
+                ds = self.ds.where(self.ds['excitation_energy'] > min(ylim_i))
+                ds = ds.where(ds['excitation_energy'] < max(ylim_i))
+                self.excitation_energy_filtered = xr.concat(
+                    [ds, self.excitation_energy_filtered],
+                    dim='excitation_energy'
+                )
             self.excitation_energy_filtered = self.excitation_energy_filtered.dropna(dim='excitation_energy', how='any')
+            self.excitation_energy_filtered = self.excitation_energy_filtered['excitation_energy']
+        else:
+            self.excitation_energy_filtered = self.ds["excitation_energy"]
         if isinstance(xlim, list) or isinstance(xlim, tuple):
-            da = da.where(da["ccd_pixel"] > min(xlim))
-            da = da.where(da["ccd_pixel"] < max(xlim))
+            for xlim_i in xlim:
+                da = da.where(da["ccd_pixel"] > min(xlim_i))
+                da = da.where(da["ccd_pixel"] < max(xlim_i))
         for e in self.excitation_energy_filtered:
             try:
                 rixs_cut = da.sel(excitation_energy=e)
