@@ -10,26 +10,43 @@ def main():
             '12': 'CoCl-MFU-4l',
             '13': 'CoNCO-MFU-4l'
         }
+    xlim = [[1000,1500]]
     for i in ['11']:        
         expt_dir = '../data/irixs/2024-6-6/CCD Scan 70{}'.format(i)
         rixs = picklerixs.Rixs(expt_dir)
-        rixs.find_elastic_line(xlim=[1000,1500])
+        rixs.find_elastic_line(
+            xlim=xlim,
+            width=None,
+            distance=9999
+        )
         rixs.fit_elastic_line()
-        #rixs.plot_mrixs(xmode='emission_energy')
-        #rixs.plot_mrixs(xmode='ccd_pixel', plot_elastic_line=True)
+        rixs.plot_mrixs(xmode='emission_energy')
+        rixs.plot_mrixs(
+            xmode='ccd_pixel', 
+            plot_elastic_line=True,
+            dim=[5.5,4.5],
+            savefig='CoL3_ccd_elastic_test{}.svg'.format(i),
+            xlim=[1000,1400]
+        )
         #print(rixs.ccd_pixel_arr)
     slope = rixs.slope
     custom_params = [['slope', slope, False, None, None, None, None]]
     for i in i_arr:        
         expt_dir = '../data/irixs/2024-6-6/CCD Scan 70{}'.format(i)
         rixs = picklerixs.Rixs(expt_dir)
-        rixs.find_elastic_line(xlim=[1000,1500])
+        rixs.find_elastic_line(xlim=xlim, width=None, distance=9999)
         rixs.fit_elastic_line(custom_params=custom_params)
-        rixs.plot_mrixs(dim=[3.75,2.75], text=text_dict[i], xmode='emission_energy', xmajtm=50, xmintm=10, ymajtm=5, ymintm=1, xlim=[600,850], savefig='CoL3_full_range{}.png'.format(i))
-        #rixs.plot_mrixs(dim=[3.75,2.75], text=text_dict[i], xmode='emission_energy', xmajtm=10, xmintm=2, ymajtm=5, ymintm=1, xlim=[765,795], savefig='CoL3_zoomed_more{}.png'.format(i))
-        #rixs.plot_mrixs(xmode='ccd_pixel', plot_elastic_line=True)
+        rixs.plot_mrixs(
+            dim=[3.75,2.35], 
+            text=text_dict[i], 
+            xmode='emission_energy', 
+            xlim=[765,795], 
+            xmajtm=10, xmintm=2, ymajtm=5, ymintm=1,
+            savefig='CoL3_full_range{}.svg'.format(i))
+        rixs.plot_mrixs(dim=[3.75,2.75], text=text_dict[i], xmode='emission_energy', xmajtm=10, xmintm=2, ymajtm=5, ymintm=1, xlim=[765,795], savefig='CoL3_zoomed_more{}.png'.format(i))
+        # rixs.plot_mrixs(xmode='ccd_pixel', plot_elastic_line=True)
         print(rixs.ccd_pixel_arr)
-    #plt.show()
+    plt.show()
 
 if __name__ == '__main__':
     main()

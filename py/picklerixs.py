@@ -91,9 +91,11 @@ class Rixs:
 
     def find_elastic_line(
         self,
-        distance=9999,
+        distance=None,
         xlim=None,
         ylim=None,
+        width=1.25,
+        prominence=0.00005,
         **kwargs
     ):
         '''
@@ -134,10 +136,21 @@ class Rixs:
             except:
                 warnings.warn('No RIXS cut found at excitation energy = {} eV.'.format(e))
             else:
-                idx, _ = find_peaks(rixs_cut, distance=distance, **kwargs)
-                idx_arr.append(idx[0])
-                peak_arr.append(rixs_cut[idx[0]])
-                ccd_pixel_arr.append(ccd_pixel[idx[0]])
+                idx, _ = find_peaks(
+                    rixs_cut, 
+                    distance=distance, 
+                    width=width,
+                    prominence=prominence,
+                    **kwargs
+                )
+                # try:
+                #     i = idx[1]
+                # except:
+                #     i = idx[0]
+                i = idx[0]
+                idx_arr.append(i)
+                peak_arr.append(rixs_cut[i])
+                ccd_pixel_arr.append(ccd_pixel[i])
         idx_arr = np.array(idx_arr)
         peak_arr = np.array(idx_arr)
         self.ccd_pixel_arr = np.array(ccd_pixel_arr)
@@ -161,6 +174,7 @@ class Rixs:
         self.params.add('intercept', value=-np.average(self.excitation_energy_filtered), min=0)
         self.params.add('slope', value=(np.max(self.excitation_energy_filtered)-np.min(self.excitation_energy_filtered))/np.average(self.ccd_pixel_arr), min=0)
         self.params.add_many(*custom_params)
+        print(self.params)
         
         print(self.ccd_pixel_arr)
         print(self.excitation_energy_filtered)
@@ -203,11 +217,62 @@ class Rixs:
                 warnings.warn('Target variable {} not found or invalid i_0 specified.'.format(var))
         
         
-    def plot_xes():
+    def plot_xes(
+        self,
+        excitation_energy,
+        xmode='emission_energy',
+        # kwargs passed to self.plot_opts()
+        dim=[3.25,3.25],
+        savefig=False,
+        text=None,
+        xlabel=None,
+        xmajtm=None,
+        xmintm=None,
+        ylabel='Intensity (a.u.)',
+        ymajtm=None,
+        ymintm=None,
+        xlim=None,
+        ):
         '''
         Plot one or more XES traces.
+
+        ARGS:
+            excitation_energy (list-like of float or int): Excitation energies to plot. 
+                If an exact match does not exist, the closest existing value will be selected.
         '''
-        pass
+        self.rixs_cut = self.ds.sel(excitation_energy=excitation_energy, method='nearest')   
+
+        self.fig, self.axs = plt.subplots(
+            layout='constrained'
+        )
+        
+        self.axs.plot(
+            self.rixs_cut[xmode],
+            self.rixs_cut['norm_rixs_intensity']
+        )
+        
+        if isinstance(xlabel, str):
+            pass
+        elif xmode == 'emission_energy':
+            xlabel = 'Emission Energy (eV)'
+        elif xmode == 'ccd_pixel':
+            xlabel = 'CCD Pixel (a.u.)'
+
+        self.plot_opts(
+            dim=dim,
+            savefig=savefig,
+            text=text,
+            xlabel=xlabel,
+            xmajtm=xmajtm,
+            xmintm=xmintm,
+            ylabel=ylabel,
+            ymajtm=ymajtm,
+            ymintm=ymintm,
+            xlim=xlim,
+            mode='xes'
+        )
+
+        return self.fig, self.axs
         
     def plot_mrixs(
         self,
@@ -217,8 +282,10 @@ class Rixs:
         plot_tey=True,
         savefig=False,
         text=None,
+        xlabel='Emission Energy (eV)',
         xmajtm=None,
         xmintm=None,
+        ylabel='Excitation Energy (eV)',
         ymajtm=None,
         ymintm=None,
         xlim=None,
@@ -280,14 +347,14 @@ class Rixs:
 
         if plot_elastic_line and (xmode == 'ccd_pixel'):
             self.axs[0].plot(
+                self.ccd_pixel_arr,
+                self.excitation_energy_filtered,
+                'gx', color='orange'
+            )
+            self.axs[0].plot(
                 self.ds['ccd_pixel'],
                 self.ds['emission_energy'],
                 'r-'
-            )
-            self.axs[0].plot(
-                self.ccd_pixel_arr,
-                self.excitation_energy_filtered,
-                'gx'
             )
         # XAS is automatically min-max normalized
         if plot_tfy:
@@ -307,25 +374,76 @@ class Rixs:
                 self.ds['excitation_energy'].max()
             ])
         
-        if xlim:
-            self.axs[0].set_xlim(xlim)
+        self.plot_opts(
+            dim=dim,
+            savefig=savefig,
+            text=text,
+            xlabel=xlabel,
+            xmajtm=xmajtm,
+            xmintm=xmintm,
+            ylabel=ylabel,
+            ymajtm=ymajtm,
+            ymintm=ymintm,
+            xlim=xlim,
+            mode='mrixs'
+        )
         
-        if xmajtm:
-            self.axs[0].xaxis.set_major_locator(MultipleLocator(xmajtm))
-        if xmintm:
-            self.axs[0].xaxis.set_minor_locator(MultipleLocator(xmintm))
-        if ymajtm:
-            self.axs[0].yaxis.set_major_locator(MultipleLocator(ymajtm))
-            self.axs[1].yaxis.set_major_locator(MultipleLocator(ymajtm))
-        if ymintm:
-            self.axs[0].yaxis.set_minor_locator(MultipleLocator(ymintm))
-            self.axs[1].yaxis.set_minor_locator(MultipleLocator(ymintm))
+        return self.fig, self.axs
+        
+        
+    def plot_opts(
+        self,
+        dim=[3.25,3.25],
+        savefig=False,
+        text=None,
+        xlabel='Emission Energy (eV)',
+        xmajtm=None,
+        xmintm=None,
+        ylabel='Excitation Energy (eV)',
+        ymajtm=None,
+        ymintm=None,
+        xlim=None,
+        mode='mrixs'
+    ):
+        if mode == 'mrixs':
+            if xlim:
+                self.axs[0].set_xlim(xlim)
+            
+            if xmajtm:
+                self.axs[0].xaxis.set_major_locator(MultipleLocator(xmajtm))
+            if xmintm:
+                self.axs[0].xaxis.set_minor_locator(MultipleLocator(xmintm))
+            if ymajtm:
+                self.axs[0].yaxis.set_major_locator(MultipleLocator(ymajtm))
+                self.axs[1].yaxis.set_major_locator(MultipleLocator(ymajtm))
+            if ymintm:
+                self.axs[0].yaxis.set_minor_locator(MultipleLocator(ymintm))
+                self.axs[1].yaxis.set_minor_locator(MultipleLocator(ymintm))
 
-        self.axs[0].set_xlabel('Emission Energy (eV)')
-        self.axs[0].set_ylabel('Excitation Energy (eV)')
-        if isinstance(text, str):
-            self.axs[0].text(0.05, 0.925, text, horizontalalignment='left',
-                             verticalalignment='center', transform=self.axs[0].transAxes, color='white')
+            self.axs[0].set_xlabel(xlabel)
+            self.axs[0].set_ylabel(ylabel)
+            if isinstance(text, str):
+                self.axs[0].text(0.05, 0.925, text, horizontalalignment='left',
+                                verticalalignment='center', transform=self.axs[0].transAxes, color='white')
+        elif mode == 'xes':
+            if xlim:
+                self.axs.set_xlim(xlim)
+            
+            if xmajtm:
+                self.axs.xaxis.set_major_locator(MultipleLocator(xmajtm))
+            if xmintm:
+                self.axs.xaxis.set_minor_locator(MultipleLocator(xmintm))
+            if ymajtm:
+                self.axs.yaxis.set_major_locator(MultipleLocator(ymajtm))
+            if ymintm:
+                self.axs.yaxis.set_minor_locator(MultipleLocator(ymintm))
+
+            self.axs.set_xlabel(xlabel)
+            self.axs.set_ylabel(ylabel)
+            if isinstance(text, str):
+                self.axs.text(0.05, 0.925, text, horizontalalignment='left',
+                                verticalalignment='center', transform=self.axs[0].transAxes, color='black')
+        
         self.fig.set_size_inches(*dim)
 
         if savefig:
@@ -496,7 +614,7 @@ class Rixs:
         if savefig:
             plt.savefig(savefig)
             
-    def plot_xes(
+    def plot_xes_legacy(
         self,
         idx=1,
         fig=None,
