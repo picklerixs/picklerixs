@@ -83,11 +83,26 @@ class Rixs:
         self.normalize_to_flux()
         print(self.ds)
             
-    def calc_ipfy():
-        pass
-            
-    def calc_pfy():
-        pass
+    def calc_pfy(
+        self,
+        xlim,
+        mode='ipfy',
+        xmode='emission_energy'
+    ):        
+        ds = self.ds.where(self.ds[xmode] > min(xlim))
+        ds = ds.where(ds[xmode] < max(xlim))
+        try:
+            if mode == 'ipfy':
+                self.ds = self.ds.merge({
+                    'norm_iPFY': np.divide(1, ds['norm_rixs_intensity'].sum(dim=xmode))
+                })
+            else:  
+                self.ds = self.ds.merge({
+                    'norm_PFY': ds['norm_rixs_intensity'].sum(dim=xmode)
+                })
+        except:
+            warnings.warn('Normalized RIXS intensity not found. (i)PFY calculation aborted.')
+        
 
     def find_elastic_line(
         self,
@@ -198,7 +213,7 @@ class Rixs:
     def normalize_to_flux(
         self,
         i_0='Izero',
-        target_vars=['rixs_intensity', 'TFY', 'TEY', 'PFY']
+        target_vars=['rixs_intensity', 'TFY', 'TEY']
     ):
         '''
         Normalize target variables to x-ray flux.

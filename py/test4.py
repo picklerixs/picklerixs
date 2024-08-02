@@ -48,7 +48,7 @@ def main():
         # rixs.plot_mrixs(dim=[3.75,2.75], text=text_dict[i], xmode='emission_energy', xmajtm=10, xmintm=2, ymajtm=5, ymintm=1, xlim=[765,795], savefig='CoL3_zoomed_more{}.png'.format(i))
         # rixs.plot_mrixs(xmode='ccd_pixel', plot_elastic_line=True)
         # print(rixs.ccd_pixel_arr)
-    plt.show()
+    # plt.show()
 
 if __name__ == '__main__':
     main()
