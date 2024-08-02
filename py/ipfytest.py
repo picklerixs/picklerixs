@@ -7,7 +7,13 @@ def main():
     rixs = picklerixs.Rixs(expt_dir)
     rixs.calc_pfy([1,150], xmode='ccd_pixel')
     # print(rixs.ds['norm_iPFY'])
-    rixs.plot_mrixs(xmode='ccd_pixel', plot_ipfy=True, plot_tey=False, plot_tfy=True)
+    # rixs.plot_mrixs(xmode='ccd_pixel', plot_ipfy=True, plot_tey=False, plot_tfy=True)
+    rixs.plot_xas(
+        plot_tfy=True,
+        plot_tey=True,
+        plot_ipfy=True,
+        offset=0.5
+    )
     # rixs.ds.plot.scatter(x='excitation_energy', y='norm_iPFY')
     plt.show()
     

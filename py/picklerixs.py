@@ -288,6 +288,76 @@ class Rixs:
         )
 
         return self.fig, self.axs
+    
+    
+    def plot_xas(
+        self,
+        plot_tfy=False,
+        plot_tey=True,
+        plot_ipfy=False,
+        offset=0,
+        # kwargs passed to self.plot_opts()
+        dim=[3.25,3.25],
+        savefig=False,
+        text=None,
+        xlabel='Excitation Energy (eV)',
+        xmajtm=None,
+        xmintm=None,
+        ylabel='Intensity (a.u.)',
+        ymajtm=None,
+        ymintm=None,
+        xlim=None,
+        ):
+        '''
+        Plot one or more XAS traces.
+
+        ARGS:
+            excitation_energy (list-like of float or int): Excitation energies to plot. 
+                If an exact match does not exist, the closest existing value will be selected.
+        '''
+        self.fig, self.axs = plt.subplots(layout='constrained')
+        
+        dy = 0
+        if plot_tey:
+            self.axs.plot(
+                self.ds['excitation_energy'],
+                (self.ds['norm_TEY']-self.ds['norm_TEY'].min())/(self.ds['norm_TEY'].max()-self.ds['norm_TEY'].min())+dy
+            )
+            dy += offset
+        if plot_tfy:
+            self.axs.plot(
+                self.ds['excitation_energy'],
+                (self.ds['norm_TFY']-self.ds['norm_TFY'].min())/(self.ds['norm_TFY'].max()-self.ds['norm_TFY'].min())+dy
+            )
+            dy += offset
+        if plot_ipfy:
+            self.axs.plot(
+                self.ds['excitation_energy'],
+                (self.ds['norm_iPFY']-self.ds['norm_iPFY'].min())/(self.ds['norm_iPFY'].max()-self.ds['norm_iPFY'].min())+dy
+            )
+            
+        # for ax in self.axs:
+        #     ax.set_ylim([
+        #         self.ds['excitation_energy'].min(),
+        #         self.ds['excitation_energy'].max()
+        #     ])
+        
+        self.plot_opts(
+            dim=dim,
+            savefig=savefig,
+            text=text,
+            xlabel=xlabel,
+            xmajtm=xmajtm,
+            xmintm=xmintm,
+            ylabel=ylabel,
+            ymajtm=ymajtm,
+            ymintm=ymintm,
+            xlim=xlim,
+            mode='xes'
+        )
+
+        return self.fig, self.axs
+        
         
     def plot_mrixs(
         self,
@@ -301,10 +371,11 @@ class Rixs:
         xlabel='Emission Energy (eV)',
         xmajtm=None,
         xmintm=None,
+        xlim=None,
         ylabel='Excitation Energy (eV)',
         ymajtm=None,
         ymintm=None,
-        xlim=None,
+        ylim=None,
         xmode='emission_energy',
         width_ratios=(1, 0.25),
         # kwargs passed to plt.pcolormesh()
@@ -406,6 +477,7 @@ class Rixs:
             ymajtm=ymajtm,
             ymintm=ymintm,
             xlim=xlim,
+            ylim=ylim,
             mode='mrixs'
         )
         
@@ -424,11 +496,15 @@ class Rixs:
         ymajtm=None,
         ymintm=None,
         xlim=None,
+        ylim=None,
         mode='mrixs'
     ):
         if mode == 'mrixs':
             if xlim:
                 self.axs[0].set_xlim(xlim)
+            if ylim:
+                self.axs[0].set_ylim(ylim)
+                self.axs[1].set_ylim(ylim)
             
             if xmajtm:
                 self.axs[0].xaxis.set_major_locator(MultipleLocator(xmajtm))
@@ -449,6 +525,8 @@ class Rixs:
         elif mode == 'xes':
             if xlim:
                 self.axs.set_xlim(xlim)
+            if ylim:
+                self.axs.set_ylim(ylim)
             
             if xmajtm:
                 self.axs.xaxis.set_major_locator(MultipleLocator(xmajtm))
@@ -463,7 +541,7 @@ class Rixs:
             self.axs.set_ylabel(ylabel)
             if isinstance(text, str):
                 self.axs.text(0.05, 0.925, text, horizontalalignment='left',
-                                verticalalignment='center', transform=self.axs[0].transAxes, color='black')
+                                verticalalignment='center', transform=self.axs.transAxes, color='black')
         
         self.fig.set_size_inches(*dim)
 
