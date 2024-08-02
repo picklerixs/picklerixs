@@ -295,6 +295,7 @@ class Rixs:
         plot_elastic_line=False,
         plot_tfy=False,
         plot_tey=True,
+        plot_ipfy=False,
         savefig=False,
         text=None,
         xlabel='Emission Energy (eV)',
@@ -380,6 +381,11 @@ class Rixs:
         if plot_tey:
             self.axs[1].plot(
                 (self.ds['norm_TEY']-self.ds['norm_TEY'].min())/(self.ds['norm_TEY'].max()-self.ds['norm_TEY'].min()),
+                self.ds['excitation_energy']
+            )
+        if plot_ipfy:
+            self.axs[1].plot(
+                (self.ds['norm_iPFY']-self.ds['norm_iPFY'].min())/(self.ds['norm_iPFY'].max()-self.ds['norm_iPFY'].min()),
                 self.ds['excitation_energy']
             )
             
