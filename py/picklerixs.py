@@ -256,17 +256,18 @@ class Rixs:
             excitation_energy (list-like of float or int): Excitation energies to plot. 
                 If an exact match does not exist, the closest existing value will be selected.
         '''
-        for ei in excitation_energy:
-            self.rixs_cut = self.ds.sel(excitation_energy=ei, method='nearest')   
-
-            self.fig, self.axs = plt.subplots(
+        self.fig, self.axs = plt.subplots(
                 layout='constrained'
             )
+        dy = 0
+        for ei in excitation_energy:
+            self.rixs_cut = self.ds.sel(excitation_energy=ei, method='nearest')   
             
             self.axs.plot(
                 self.rixs_cut[xmode],
-                self.rixs_cut['norm_rixs_intensity']+offset
+                self.rixs_cut['norm_rixs_intensity']+dy
             )
+            dy += offset 
         
         if isinstance(xlabel, str):
             pass
