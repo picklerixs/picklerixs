@@ -38,7 +38,7 @@ def main():
     for i in i_arr:        
         expt_dir = '{}{}'.format(dir_stem, i)
         rixs = picklerixs.Rixs(expt_dir)
-        rixs.calc_pfy([1,150], xmode='ccd_pixel')
+        rixs.calc_pfy([0,350], xmode='ccd_pixel')
         # rixs.find_elastic_line(xlim=xlim, width=None, distance=9999)
         # rixs.fit_elastic_line(custom_params=custom_params)
         rixs.plot_mrixs(
