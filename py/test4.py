@@ -1,6 +1,10 @@
 import picklerixs
 import matplotlib.pyplot as plt
 
+'''
+Plot hrRIXS data and save as SVG
+'''
+
 def main():
     i_arr = ['74','75','76','77']
     text_dict = {
